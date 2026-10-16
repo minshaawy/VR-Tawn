@@ -22,9 +22,39 @@
   document.head.appendChild(css);
   document.documentElement.classList.add('tw-locked');
 
+  // crypto.subtle only exists on https, so plain http (e.g. before the domain's certificate is issued) uses sha256js.
   async function sha256(text) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+    if (window.crypto && crypto.subtle) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+      return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    return sha256js(new TextEncoder().encode(text));
+  }
+  function sha256js(bytes) {
+    const K = [], H = [], isPrime = n => { for (let f = 2; f * f <= n; f++) if (n % f === 0) return false; return true; };
+    for (let n = 2, i = 0; i < 64; n++) if (isPrime(n)) {
+      if (i < 8) H[i] = (Math.pow(n, 1 / 2) * 2 ** 32) | 0;
+      K[i++] = (Math.pow(n, 1 / 3) * 2 ** 32) | 0;
+    }
+    const len = bytes.length, total = ((len + 9 + 63) >> 6) << 6, m = new Uint8Array(total);
+    m.set(bytes); m[len] = 0x80;
+    new DataView(m.buffer).setUint32(total - 4, len * 8);
+    const w = new Int32Array(64), rot = (x, n) => (x >>> n) | (x << (32 - n));
+    for (let o = 0; o < total; o += 64) {
+      for (let i = 0; i < 16; i++) w[i] = (m[o + 4 * i] << 24) | (m[o + 4 * i + 1] << 16) | (m[o + 4 * i + 2] << 8) | m[o + 4 * i + 3];
+      for (let i = 16; i < 64; i++) {
+        const s0 = rot(w[i - 15], 7) ^ rot(w[i - 15], 18) ^ (w[i - 15] >>> 3), s1 = rot(w[i - 2], 17) ^ rot(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+        w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+      }
+      let [a, b, c, d, e, f, g, h] = H;
+      for (let i = 0; i < 64; i++) {
+        const t1 = (h + (rot(e, 6) ^ rot(e, 11) ^ rot(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + w[i]) | 0;
+        const t2 = ((rot(a, 2) ^ rot(a, 13) ^ rot(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;
+        h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+      }
+      [a, b, c, d, e, f, g, h].forEach((v, i) => { H[i] = (H[i] + v) | 0; });
+    }
+    return H.map(v => (v >>> 0).toString(16).padStart(8, '0')).join('');
   }
   function show() {
     const gate = document.createElement('div');
