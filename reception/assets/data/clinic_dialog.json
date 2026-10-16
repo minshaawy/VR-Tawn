@@ -1,0 +1,101 @@
+{
+  "_note": "PLACEHOLDER WORDING - must be reviewed by Tawuniya (coverage, approvals, app features) before any public use. Audio files are generated from 'ar' into Web/media/clinic/<id>.mp3. Doctor voice: Saad Al-Qahtani.",
+  "doctor_name": {
+    "ar": "د. خالد",
+    "en": "Dr. Khalid"
+  },
+  "greeting": {
+    "id": "greeting",
+    "ar": "أهلاً وسهلاً، أنا الدكتور خالد. كيف أقدر أساعدك اليوم؟",
+    "en": "Welcome, I'm Dr. Khalid. How can I help you today?"
+  },
+  "rounds": [
+    {
+      "prompt": {
+        "ar": "اختر سؤالك الأول",
+        "en": "Choose your first question"
+      },
+      "options": [
+        {
+          "id": "q1a",
+          "q": {
+            "ar": "هل الكشف مغطى بتأميني من التعاونية؟",
+            "en": "Is this visit covered by my Tawuniya insurance?"
+          },
+          "a": {
+            "ar": "أكيد. العيادة ضمن شبكة التعاونية، قدّم بطاقتك الطبية في الاستقبال، والموافقة تتم إلكترونياً خلال دقائق.",
+            "en": "Of course. This clinic is in the Tawuniya network — show your medical card at reception and approval is done electronically within minutes."
+          }
+        },
+        {
+          "id": "q1b",
+          "q": {
+            "ar": "أحتاج موافقة مسبقة قبل العلاج؟",
+            "en": "Do I need prior approval before treatment?"
+          },
+          "a": {
+            "ar": "بعض الإجراءات تحتاج موافقة مسبقة، وإحنا نرسلها للتعاونية إلكترونياً مباشرة، وتوصلك النتيجة برسالة على جوالك.",
+            "en": "Some procedures need prior approval. We send it to Tawuniya electronically and you get the result by text message."
+          }
+        },
+        {
+          "id": "q1c",
+          "q": {
+            "ar": "كيف أعرف المستشفيات اللي ضمن شبكتي؟",
+            "en": "How do I find hospitals in my network?"
+          },
+          "a": {
+            "ar": "من تطبيق التعاونية تقدر تشوف كل المستشفيات والعيادات اللي ضمن شبكتك، حسب موقعك وفئة وثيقتك.",
+            "en": "In the Tawuniya app you can see every hospital and clinic in your network, by location and policy class."
+          }
+        }
+      ]
+    },
+    {
+      "prompt": {
+        "ar": "اختر سؤالك الثاني",
+        "en": "Choose your second question"
+      },
+      "options": [
+        {
+          "id": "q2a",
+          "q": {
+            "ar": "وش أسوي في حالة الطوارئ؟",
+            "en": "What do I do in an emergency?"
+          },
+          "a": {
+            "ar": "في الطوارئ توجّه لأقرب مستشفى مباشرة، ما تحتاج موافقة مسبقة، والتغطية حسب وثيقتك.",
+            "en": "In an emergency go straight to the nearest hospital — no prior approval needed, and you're covered according to your policy."
+          }
+        },
+        {
+          "id": "q2b",
+          "q": {
+            "ar": "هل الأدوية مغطاة؟",
+            "en": "Are medicines covered?"
+          },
+          "a": {
+            "ar": "الأدوية الموصوفة مغطاة حسب وثيقتك، وتقدر تستلمها من الصيدليات المعتمدة أو توصلك لين البيت.",
+            "en": "Prescribed medicines are covered under your policy — pick them up at an approved pharmacy or have them delivered home."
+          }
+        },
+        {
+          "id": "q2c",
+          "q": {
+            "ar": "أقدر أستشير طبيب عن بُعد؟",
+            "en": "Can I consult a doctor remotely?"
+          },
+          "a": {
+            "ar": "إيه، تقدر تحجز استشارة طبية عن بُعد من تطبيق التعاونية وتكلّم الطبيب بالفيديو.",
+            "en": "Yes, you can book a remote consultation in the Tawuniya app and talk to a doctor by video."
+          }
+        }
+      ]
+    }
+  ],
+  "closing": {
+    "id": "closing",
+    "ar": "سلامتك، وإذا احتجت أي شي، التعاونية معك دايماً.",
+    "en": "Get well soon — and whatever you need, Tawuniya is always with you."
+  }
+}

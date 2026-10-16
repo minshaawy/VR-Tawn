@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<script src="gate.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tawuniya VR</title>
+<meta name="description" content="تجربتين VR من التعاونية: استقبال المستشفى وموقع الحادث. تشتغل في متصفح Meta Quest.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --brand:#6B47F5; --brand-dark:#34295E; --teal:#3FB8C9; --bg:#0E0C14; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; min-height:100%; background:var(--bg); color:#fff; font-family:Tajawal, system-ui, sans-serif; }
+  body { background:radial-gradient(1200px 600px at 85% -10%, rgba(107,71,245,.35), transparent 60%),
+                     radial-gradient(900px 500px at 0% 110%, rgba(63,184,201,.22), transparent 60%), var(--bg); }
+  main { max-width:1180px; margin:0 auto; padding:48px 24px 40px; }
+  header { display:flex; flex-direction:column; align-items:center; text-align:center; gap:14px; margin-bottom:44px; }
+  header img { width:260px; max-width:70%; }
+  h1 { margin:6px 0 0; font-size:clamp(32px, 5vw, 52px); font-weight:800; }
+  header p { margin:0; font-size:clamp(18px, 2.2vw, 24px); color:#cfc8ea; max-width:720px; line-height:1.6; }
+  .scenes { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:28px; }
+  a.scene { position:relative; display:flex; flex-direction:column; min-height:440px; border-radius:32px; overflow:hidden; text-decoration:none; color:#fff;
+            border:2px solid rgba(255,255,255,.12); background:#1a1626; transition:transform .2s, border-color .2s, box-shadow .2s; }
+  a.scene:hover, a.scene:focus-visible { transform:translateY(-4px); border-color:rgba(255,255,255,.55); box-shadow:0 24px 60px rgba(0,0,0,.5); outline:none; }
+  .thumb { flex:1; min-height:260px; background-size:cover; background-position:center; position:relative; }
+  .thumb::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg, transparent 45%, rgba(14,12,20,.92)); }
+  .reception .thumb { background-image:url(assets/reception.jpg), linear-gradient(135deg, #3FB8C9, #34295E); }
+  .accident .thumb { background-image:url(assets/accident.jpg), linear-gradient(135deg, #F2A33A, #34295E); }
+  .info { padding:6px 30px 30px; position:relative; }
+  .tag { display:inline-block; font-size:18px; font-weight:700; padding:6px 14px; border-radius:999px; background:rgba(107,71,245,.35); border:1px solid rgba(255,255,255,.2); margin-bottom:10px; }
+  h2 { margin:0 0 6px; font-size:34px; font-weight:800; }
+  .info p { margin:0 0 18px; color:#d9d3ef; font-size:20px; line-height:1.55; }
+  .cta { display:inline-flex; align-items:center; gap:10px; font-weight:800; font-size:24px; padding:16px 30px; border-radius:20px; background:var(--brand); }
+  .accident .cta { background:#F2A33A; color:#1d1630; }
+  .how { margin-top:40px; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px; }
+  .how div { background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:22px; padding:20px 22px; font-size:19px; line-height:1.6; color:#d9d3ef; }
+  .how b { display:block; color:#fff; font-size:21px; margin-bottom:4px; }
+  footer { text-align:center; color:#8e88a8; font-size:16px; margin-top:36px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="assets/tawuniya_logo_white.png" alt="التعاونية Tawuniya">
+    <h1>عالم التعاونية VR</h1>
+    <p>اختار المشهد. البس نضارة Meta Quest وافتح الصفحة من المتصفح، أو جرّبها على الكمبيوتر أو الموبايل.</p>
+  </header>
+
+  <section class="scenes">
+    <a class="scene reception" href="reception/">
+      <div class="thumb"></div>
+      <div class="info">
+        <span class="tag">التأمين الطبي</span>
+        <h2>استقبال المستشفى</h2>
+        <p>كلّم سارة موظفة الاستقبال ود. خالد، واسأل عن التغطية والموافقات وشبكة المستشفيات.</p>
+        <span class="cta">ادخل المشهد ←</span>
+      </div>
+    </a>
+    <a class="scene accident" href="accident/">
+      <div class="thumb"></div>
+      <div class="info">
+        <span class="tag">تأمين المركبات</span>
+        <h2>موقع الحادث</h2>
+        <p>عبدالله معاين المطالبات معاك في موقع الحادث: نجم، ورفع المطالبة، والمساعدة على الطريق.</p>
+        <span class="cta">ادخل المشهد ←</span>
+      </div>
+    </a>
+  </section>
+
+  <section class="how">
+    <div><b>🥽 على Meta Quest</b>افتح الصفحة من متصفح النضارة، اختار المشهد، واضغط «ادخل VR».</div>
+    <div><b>🕹️ الحركة</b>العصا الشمال أو KAT VR للمشي، والليزر والـ Trigger للاختيار، وزر A للكلام.</div>
+    <div><b>💻 على الكمبيوتر</b>W A S D أو الأسهم للمشي، واسحب بالماوس عشان تبص حواليك.</div>
+  </section>
+
+  <footer>Tawuniya VR · نسخة تجريبية</footer>
+</main>
+</body>
+</html>

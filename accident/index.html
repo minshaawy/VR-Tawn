@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<script src="../gate.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Tawuniya Accident VR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --brand:#6B47F5; --brand-dark:#34295E; --teal:#3FB8C9; }
+  html, body { margin:0; height:100%; overflow:hidden; background:#0E0C14; color:#fff; font-family:Tajawal, system-ui, sans-serif;
+               -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
+  canvas#view { display:block; width:100%; height:100%; touch-action:none; }
+  button, a.tbtn { font-family:Tajawal, system-ui, sans-serif; cursor:pointer; }
+  /* Top bar */
+  #top { position:fixed; top:20px; left:20px; right:20px; display:flex; justify-content:space-between; align-items:center; pointer-events:none; gap:12px; }
+  #top .chip { pointer-events:auto; background:rgba(52,41,94,.9); border-radius:18px; padding:14px 22px; font-weight:800; font-size:24px; }
+  #top .btns { display:flex; gap:12px; pointer-events:auto; }
+  .tbtn { font-weight:800; font-size:24px; color:#fff; background:rgba(52,41,94,.9); border:2px solid rgba(255,255,255,.25); border-radius:18px; padding:16px 26px; min-height:68px; box-sizing:border-box; text-decoration:none; display:inline-flex; align-items:center; }
+  .tbtn.vr { background:var(--brand); border-color:transparent; }
+  .tbtn:hover { filter:brightness(1.2); }
+  /* Talk prompt */
+  #prompt { position:fixed; bottom:150px; left:50%; transform:translateX(-50%); display:none; }
+  #prompt button { font-weight:800; font-size:30px; color:#fff; background:var(--brand); border:3px solid rgba(255,255,255,.35); border-radius:24px; padding:22px 40px; box-shadow:0 10px 30px rgba(0,0,0,.4); }
+  #prompt button:hover { filter:brightness(1.15); }
+  /* Dialogue card */
+  #dialog { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); width:min(980px, calc(100% - 40px)); display:none; max-height:calc(100% - 140px); overflow:auto;
+            background:rgba(22,18,34,.95); border:2px solid rgba(255,255,255,.14); border-radius:28px; padding:26px; box-sizing:border-box; box-shadow:0 18px 50px rgba(0,0,0,.5); }
+  #dialog .who { display:flex; align-items:center; gap:18px; margin-bottom:14px; padding-inline-end:150px; }
+  #dialog .who img { width:84px; height:84px; border-radius:50%; border:3px solid var(--brand); background:#fff; object-fit:cover; }
+  #dialog .who b { font-size:30px; }
+  #dialog .who small { display:block; opacity:.75; font-size:21px; }
+  #speaking { margin-inline-start:auto; display:flex; gap:5px; align-items:flex-end; height:30px; }
+  #speaking i { width:7px; background:var(--teal); border-radius:3px; height:6px; transition:height .1s; }
+  #line { font-size:30px; line-height:1.65; min-height:100px; }
+  #you { font-size:23px; color:#C8BEFF; margin-bottom:8px; display:none; }
+  #options { display:flex; flex-direction:column; gap:14px; margin-top:18px; }
+  #options button { font-weight:700; font-size:27px; line-height:1.4; text-align:start; color:#fff; background:rgba(107,71,245,.22);
+                    border:3px solid rgba(107,71,245,.75); border-radius:20px; padding:22px 26px; min-height:88px; }
+  #options button:hover, #options button:focus-visible { background:rgba(107,71,245,.6); border-color:#fff; }
+  #options .muted { background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.25); }
+  #closeTalk { position:absolute; top:18px; left:18px; font-weight:800; font-size:22px; color:#fff; background:rgba(255,255,255,.1); border:2px solid rgba(255,255,255,.25); border-radius:16px; padding:12px 20px; }
+  #steps { display:flex; gap:8px; margin-top:18px; }
+  #steps i { flex:1; height:7px; border-radius:4px; background:rgba(255,255,255,.15); }
+  #steps i.on { background:var(--brand); }
+  /* Go-to + walk pad (browser mode: the Quest has no keyboard) */
+  #nav { position:fixed; bottom:24px; left:24px; right:24px; display:flex; justify-content:space-between; align-items:flex-end; pointer-events:none; }
+  #nav > div { display:flex; gap:12px; pointer-events:auto; }
+  .nbtn { font-weight:800; font-size:24px; color:#fff; background:rgba(52,41,94,.92); border:2px solid rgba(255,255,255,.25); border-radius:20px; padding:18px 24px; min-width:96px; min-height:84px; }
+  .nbtn:hover { background:rgba(107,71,245,.75); }
+  .nbtn.go { background:rgba(63,184,201,.9); color:#0d1b2a; }
+  #pad { direction:ltr; display:grid !important; grid-template-columns:repeat(3, 96px); grid-template-rows:repeat(2, 84px); gap:10px !important; }
+  #pad .nbtn { padding:0; font-size:36px; }
+  body.talking #nav { display:none; }
+  /* Start card */
+  #start { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(14,12,20,.88); z-index:5; }
+  #start .card { background:#fff; color:var(--brand-dark); border-radius:32px; padding:44px 48px; max-width:720px; width:calc(100% - 40px); box-sizing:border-box; text-align:center; }
+  #start img { width:340px; max-width:80%; }
+  #start h1 { font-size:36px; margin:20px 0 10px; }
+  #start p { margin:8px 0; color:#555; font-size:24px; line-height:1.5; }
+  #start .row { display:flex; gap:16px; justify-content:center; margin-top:26px; flex-wrap:wrap; }
+  #start button { font-weight:800; font-size:30px; border:0; border-radius:22px; padding:24px 40px; min-width:260px; }
+  #go { background:var(--brand-dark); color:#fff; }
+  #goVR { background:var(--brand); color:#fff; }
+  #start button:disabled { opacity:.45; }
+  #status { font-size:20px; color:#888; margin-top:14px; direction:ltr; }
+  @media (max-width:700px) {
+    #top .chip { font-size:18px; padding:10px 14px; } .tbtn { font-size:18px; padding:10px 14px; min-height:52px; }
+    #pad { grid-template-columns:repeat(3, 70px); grid-template-rows:repeat(2, 64px); } .nbtn { min-height:64px; min-width:70px; font-size:18px; padding:10px 14px; }
+    #start .card { padding:28px 20px; } #start h1 { font-size:26px; } #start p { font-size:18px; } #start button { font-size:22px; min-width:200px; padding:18px 24px; }
+    #line { font-size:22px; } #options button { font-size:20px; padding:14px 18px; min-height:64px; }
+  }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="top">
+  <div class="chip" id="where">موقع الحادث · Accident site</div>
+  <div class="btns">
+    <a class="tbtn" href="../">🏠 الرئيسية</a>
+    <button class="tbtn" id="lang">English</button>
+    <button class="tbtn vr" id="vrTop">ادخل VR 🥽</button>
+  </div>
+</div>
+<div id="prompt"><button id="talk"><span id="talkLabel"></span></button></div>
+<div id="dialog">
+  <button id="closeTalk">✕ إنهاء</button>
+  <div class="who">
+    <img id="avatar" src="" alt="">
+    <div><b id="docname"></b><small id="docrole"></small></div>
+    <div id="speaking"><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+  <div id="you"></div>
+  <div id="line"></div>
+  <div id="options"></div>
+  <div id="steps"><i></i><i></i><i></i></div>
+</div>
+<div id="nav">
+  <div>
+    <button class="nbtn go" data-goto="surveyor">🦺 روح لعبدالله</button>
+  </div>
+  <div id="pad">
+    <button class="nbtn" data-hold="turnL">⟲</button><button class="nbtn" data-hold="fwd">▲</button><button class="nbtn" data-hold="turnR">⟳</button>
+    <span></span><button class="nbtn" data-hold="back">▼</button><span></span>
+  </div>
+</div>
+<div id="start"><div class="card">
+  <img src="assets/branding/tawuniya_logo.png" alt="Tawuniya">
+  <h1>موقع الحادث · تأمين المركبات</h1>
+  <p>عبدالله معاين المطالبات وصل لموقع الحادث. كلّمه واختار أسئلتك عن نجم والمطالبة والمساعدة على الطريق.</p>
+  <p style="font-size:20px">في VR: امشي بالـ KAT أو العصا الشمال · وجّه الليزر واضغط الـ Trigger للاختيار · A للتحدث</p>
+  <div class="row">
+    <button id="goVR" disabled>ادخل VR 🥽</button>
+    <button id="go" disabled>ابدأ في المتصفح</button>
+  </div>
+  <div id="status">Loading…</div>
+</div></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+// Desert road accident site in metres: x right (along the road), y up, z towards the visitor.
+// Same layout as the Unreal map (Scripts/world_scenes.py build_accident): road centred on z=-6, shoulder z[0,2.5].
+const CHARACTERS = [
+  { key: 'surveyor', model: 'assets/models/surveyor.glb', height: 1.78,
+    pos: [0.8, 1.2], dialog: 'assets/data/surveyor_dialog.json', audio: 'media/accident', ext: 'm4a', avatar: 'media/accident/surveyor_avatar.png',
+    name: { ar: 'عبدالله', en: 'Abdullah' }, role: { ar: 'معاين مطالبات المركبات · التعاونية', en: 'Motor claims surveyor · Tawuniya' },
+    prompt: { ar: 'تحدّث مع معاين المطالبات', en: 'Talk to the claims surveyor' }, baseYaw: -8 * Math.PI / 180, maxTurn: 1.2 },
+];
+for (const c of CHARACTERS) c.data = await (await fetch(c.dialog)).json();
+await Promise.all([document.fonts.load('700 64px Tajawal'), document.fonts.load('400 64px Tajawal'), document.fonts.load('800 64px Tajawal')]).catch(() => {});
+
+// ---------------------------------------------------------------- renderer ---
+const canvas = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.xr.enabled = true;
+renderer.xr.setReferenceSpaceType('local-floor');
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+scene.environmentIntensity = 0.55;
+scene.fog = new THREE.Fog('#e9dcc6', 60, 260);
+
+// Sky: vertical gradient on a big inverted sphere (no extra textures to download)
+{
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(300, 32, 16), new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite: false, fog: false,
+    uniforms: { top: { value: new THREE.Color('#5d9ad8') }, mid: { value: new THREE.Color('#bcd6ee') }, bottom: { value: new THREE.Color('#efe2cb') } },
+    vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: 'uniform vec3 top, mid, bottom; varying vec3 vP; void main(){ float h = vP.y; vec3 c = h > 0.0 ? mix(mid, top, pow(min(h*2.2,1.0),0.8)) : bottom; c = mix(bottom, c, smoothstep(-0.02, 0.06, h)); gl_FragColor = vec4(c,1.0); }',
+  }));
+  sky.renderOrder = -1; scene.add(sky);
+}
+scene.add(new THREE.HemisphereLight('#cfe2f5', '#cdb48c', 0.9));
+
+const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, 700);
+const player = new THREE.Group();
+player.add(camera);
+scene.add(player);
+camera.position.y = 1.65;
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// ---------------------------------------------------------------- materials ---
+const texLoader = new THREE.TextureLoader();
+function tex(name, repeat, srgb = true) {
+  const t = texLoader.load(`assets/textures/${name}.jpg`);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(repeat[0], repeat[1]);
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const std = (color, roughness = 0.8, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness, ...extra });
+const M = {
+  sand: std('#e2cfac', 0.95, { map: tex('sand', [60, 60]), normalMap: tex('sand_normal', [60, 60], false) }),
+  dune: std('#dcc49b', 1),
+  asphalt: std('#ffffff', 0.85, { map: tex('asphalt', [100, 3]), normalMap: tex('asphalt_normal', [100, 3], false) }),
+  gravel: std('#cbbda3', 0.95, { map: tex('sand', [80, 1]) }),
+  white: std('#f2f2ee', 0.6), yellow: std('#e8b900', 0.6),
+  orange: std('#ff6a13', 0.55), stripe: std('#ffffff', 0.4, { emissive: '#ffffff', emissiveIntensity: 0.15 }),
+  red: std('#d1121b', 0.4, { emissive: '#7a0008', emissiveIntensity: 0.2 }),
+  steel: std('#9aa1a8', 0.35, { metalness: 0.9 }),
+  lamp: std('#fff6e0', 0.3, { emissive: '#fff1c8', emissiveIntensity: 0.4 }),
+  debris: std('#2a2a2a', 0.5), tailGlass: std('#9b0e12', 0.2),
+  signGreen: std('#0a6b3a', 0.5),
+};
+
+// ------------------------------------------------------------------ helpers ---
+const colliders = [];   // axis-aligned boxes in XZ
+function box(w, h, d, mat, x, y, z, collide = true, cast = false) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y, z);
+  m.receiveShadow = true;
+  m.castShadow = cast;
+  scene.add(m);
+  if (collide && y - h / 2 < 1.7 && y + h / 2 > 0.3) colliders.push({ x0: x - w / 2, x1: x + w / 2, z0: z - d / 2, z1: z + d / 2 });
+  return m;
+}
+function plane(w, d, mat, x, y, z) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat);
+  m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; scene.add(m);
+  return m;
+}
+function canvasPlane(w, h, draw, px = 1024) {
+  const cnv = document.createElement('canvas');
+  cnv.width = px; cnv.height = Math.round(px * h / w);
+  draw(cnv.getContext('2d'), cnv.width, cnv.height);
+  const t = new THREE.CanvasTexture(cnv);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t, transparent: true, toneMapped: false }));
+  return mesh;
+}
+const loadImg = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src; });
+const logoImg = await loadImg('assets/branding/tawuniya_logo_white.png');
+
+// ------------------------------------------------------------------- layout ---
+// Desert floor, dunes on the horizon
+plane(500, 500, M.sand, 0, -0.03, 0);
+for (const [hx, hz, s] of [[-120, -160, 70], [60, -200, 90], [180, -150, 60], [-200, -120, 50], [-150, 140, 60], [120, 170, 80]]) {
+  const d = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12), M.dune);
+  d.scale.set(s, s * 0.35, s * 0.6); d.position.set(hx, -s * 0.35 * 0.55, hz); scene.add(d);
+}
+// Two-lane road across the view, lane markings, gravel shoulder
+plane(500, 12, M.asphalt, 0, 0.0, -6);
+for (const [side, mat] of [[-1, M.yellow], [1, M.white]]) plane(500, 0.18, mat, 0, 0.012, -6 + side * 5.6);
+for (let k = -30; k <= 30; k++) plane(3.0, 0.15, M.white, k * 8.0, 0.012, -6);
+plane(500, 2.5, M.gravel, 0, -0.005, 1.25);
+
+// The accident: SUV rear-ended by a coupe, debris, hazard triangle, cones
+box(0.4, 0.02, 0.25, M.debris, 1.6, 0.02, -3.0, false);
+box(0.25, 0.02, 0.18, M.tailGlass, 1.2, 0.02, -3.6, false);
+box(0.18, 0.02, 0.12, M.tailGlass, 2.3, 0.02, -2.6, false);
+{ // red warning triangle on a small stand
+  const tri = new THREE.Group();
+  const shape = new THREE.Shape(); const R = 0.32;
+  shape.moveTo(-R, 0); shape.lineTo(R, 0); shape.lineTo(0, R * 1.6); shape.closePath();
+  const hole = new THREE.Path(); const r = 0.2; hole.moveTo(-r, 0.06); hole.lineTo(r, 0.06); hole.lineTo(0, 0.06 + r * 1.6); hole.closePath();
+  shape.holes.push(hole);
+  const m = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: 0.02, bevelEnabled: false }), M.red); m.castShadow = true;
+  m.rotation.x = -0.2; tri.add(m);
+  const foot = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.02, 0.2), M.debris); foot.position.y = 0.01; tri.add(foot);
+  tri.position.set(9.5, 0.02, -4.0); tri.rotation.y = 0.15; scene.add(tri);
+}
+const coneGeo = new THREE.ConeGeometry(0.17, 0.7, 20), bandGeo = new THREE.CylinderGeometry(0.105, 0.125, 0.09, 20), baseGeo = new THREE.BoxGeometry(0.36, 0.03, 0.36);
+for (let k = 0; k < 6; k++) {
+  const x = 7.0 + k * 1.4, z = -1.0 - k * 0.55;
+  const c = new THREE.Mesh(coneGeo, M.orange); c.position.set(x, 0.38, z); c.castShadow = true; scene.add(c);
+  const b = new THREE.Mesh(bandGeo, M.stripe); b.position.set(x, 0.42, z); scene.add(b);
+  const ba = new THREE.Mesh(baseGeo, M.orange); ba.position.set(x, 0.015, z); scene.add(ba);
+}
+// Street lights along the far edge
+for (const x of [-75, -45, -15, 15, 45, 75]) {
+  box(0.18, 9, 0.18, M.steel, x, 4.5, -12.8, true, true);
+  box(1.6, 0.12, 0.14, M.steel, x, 8.95, -12.8 + 0.7, false);
+  const arm = box(0.12, 0.12, 1.6, M.steel, x, 8.95, -12.0, false); arm.castShadow = true;
+  box(0.5, 0.12, 0.28, M.lamp, x, 8.86, -11.3, false);
+}
+// Road sign on the shoulder (green, Saudi style)
+box(0.12, 4.0, 0.12, M.steel, -12.8, 2.0, 1.6, true, true);
+box(0.12, 4.0, 0.12, M.steel, -9.2, 2.0, 1.6, true, true);
+box(4.2, 1.6, 0.08, M.signGreen, -11.0, 3.6, 1.6, false, true);
+{
+  const s = canvasPlane(4.0, 1.45, (c, w, h) => {
+    c.fillStyle = '#0a6b3a'; c.fillRect(0, 0, w, h);
+    c.strokeStyle = '#fff'; c.lineWidth = 10; c.strokeRect(14, 14, w - 28, h - 28);
+    c.fillStyle = '#fff'; c.textAlign = 'center';
+    c.direction = 'rtl'; c.font = '800 120px Tajawal'; c.fillText('الرياض  ٤٢ كم', w / 2, h * 0.45);
+    c.direction = 'ltr'; c.font = '700 96px Arial, sans-serif'; c.fillText('Riyadh  42 km', w / 2, h * 0.82);
+  });
+  s.position.set(-11.0, 3.6, 1.65); scene.add(s);
+}
+// Tawuniya claims stand next to the surveyor
+{
+  box(0.08, 1.9, 0.08, M.steel, -5.4, 0.95, 2.2, true, true);
+  box(0.08, 1.9, 0.08, M.steel, -3.6, 0.95, 2.2, true, true);
+  const board = canvasPlane(2.0, 1.25, (c, w, h) => {
+    c.fillStyle = '#34295E'; c.fillRect(0, 0, w, h); c.fillStyle = '#3FB8C9'; c.fillRect(0, 0, w, 22);
+    c.direction = 'rtl'; c.textAlign = 'right'; c.fillStyle = '#fff';
+    c.font = '800 72px Tajawal'; c.fillText('صار عندك حادث؟', w - 50, 125);
+    c.font = '400 46px Tajawal'; c.fillStyle = '#E1DCF5';
+    ['١. تأكد من سلامتك وشغّل الإشارات', '٢. بلّغ نجم أو المرور', '٣. ارفع المطالبة من تطبيق التعاونية', '٤. المساعدة على الطريق: سطحة وبطارية']
+      .forEach((t, i) => c.fillText(t, w - 50, 230 + i * 82));
+    c.drawImage(logoImg, 50, h - 115, 85 * 295 / 88, 85);
+  });
+  board.position.set(-4.5, 1.35, 2.25); scene.add(board);
+  box(2.06, 1.31, 0.03, std('#2a2340', 0.6), -4.5, 1.35, 2.22, false, true);
+}
+
+// Sun: low afternoon light, shadows only around the play area
+const sun = new THREE.DirectionalLight('#fff0d8', 2.4);
+sun.position.set(-14, 18, 12); sun.castShadow = true;
+sun.target.position.set(1, 0, -2); scene.add(sun.target);
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -18, right: 18, top: 18, bottom: -18, near: 1, far: 60 });
+sun.shadow.bias = -0.0005; sun.shadow.radius = 3;
+scene.add(sun);
+
+// ------------------------------------------------------------------ models ---
+const gltf = new GLTFLoader();
+function fit(root, { len, height }) {
+  const g = new THREE.Group(); g.add(root);
+  g.updateMatrixWorld(true);
+  let b = new THREE.Box3().setFromObject(g); const s = b.getSize(new THREE.Vector3());
+  g.scale.setScalar(height ? height / s.y : len / Math.max(s.x, s.z));
+  g.updateMatrixWorld(true);
+  b = new THREE.Box3().setFromObject(g); const c = b.getCenter(new THREE.Vector3());
+  root.position.sub(new THREE.Vector3(c.x / g.scale.x, b.min.y / g.scale.x, c.z / g.scale.x));
+  return g;
+}
+// Car: model turned so its long axis runs along the road (x), then yawed by `yaw` degrees.
+async function car(file, x, z, yaw, len, flip = false) {
+  const res = await gltf.loadAsync(`assets/models/${file}.glb`);
+  res.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  const b = new THREE.Box3().setFromObject(res.scene), s = b.getSize(new THREE.Vector3());
+  const inner = new THREE.Group(); inner.add(res.scene);
+  inner.rotation.y = (s.z > s.x ? Math.PI / 2 : 0) + (flip ? Math.PI : 0);
+  const holder = new THREE.Group();
+  holder.add(fit(inner, { len }));
+  holder.position.set(x, 0, z); holder.rotation.y = -yaw * Math.PI / 180;
+  scene.add(holder);
+  const bb = new THREE.Box3().setFromObject(holder);
+  colliders.push({ x0: bb.min.x, x1: bb.max.x, z0: bb.min.z, z1: bb.max.z });
+  return holder;
+}
+async function palm(x, z, h, k) {
+  const res = await gltf.loadAsync('assets/models/palm.glb');
+  res.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; if (o.material.map) o.material.alphaTest = 0.4; } });
+  const holder = new THREE.Group(); holder.add(fit(res.scene, { height: h }));
+  holder.position.set(x, 0, z); holder.rotation.y = (k * 73) * Math.PI / 180;
+  scene.add(holder);
+  colliders.push({ x0: x - 0.3, x1: x + 0.3, z0: z - 0.3, z1: z + 0.3 });
+}
+// People (Meshy characters face +z already)
+async function loadCharacter(c) {
+  const res = await gltf.loadAsync(c.model);
+  res.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+  c.group = new THREE.Group();
+  c.group.add(fit(res.scene, { height: c.height }));
+  c.group.position.set(c.pos[0], 0, c.pos[1]);
+  c.group.rotation.y = c.baseYaw || 0;
+  scene.add(c.group);
+  colliders.push({ x0: c.pos[0] - 0.3, x1: c.pos[0] + 0.3, z0: c.pos[1] - 0.25, z1: c.pos[1] + 0.25 });
+}
+
+// ------------------------------------------------------------------- input ---
+let yaw = 0, pitch = -0.05, aHeld = false;
+player.position.set(0, 0, 8);
+const keys = new Set();
+addEventListener('keydown', e => {
+  keys.add(e.code);
+  if (e.code === 'KeyE' && nearest && !talking) startDialog(nearest);
+  if (e.code === 'KeyL') setLang(LANG === 'ar' ? 'en' : 'ar');
+});
+addEventListener('keyup', e => keys.delete(e.code));
+let dragging = false, lx = 0, ly = 0;
+canvas.addEventListener('pointerdown', e => { dragging = true; lx = e.clientX; ly = e.clientY; });
+addEventListener('pointerup', () => { dragging = false; });
+addEventListener('pointermove', e => {
+  if (!dragging || talking) return;
+  yaw -= (e.clientX - lx) * 0.004; pitch = Math.max(-1.2, Math.min(1.2, pitch - (e.clientY - ly) * 0.004));
+  lx = e.clientX; ly = e.clientY;
+});
+function collide(x, z) {
+  const R = 0.28;
+  x = Math.max(-40, Math.min(40, x)); z = Math.max(-16, Math.min(16, z));   // stay near the accident
+  for (let k = 0; k < 2; k++) for (const b of colliders) {
+    const cx = Math.max(b.x0, Math.min(b.x1, x)), cz = Math.max(b.z0, Math.min(b.z1, z));
+    const dx = x - cx, dz = z - cz, d = Math.hypot(dx, dz);
+    if (d < R) {
+      if (d > 1e-6) { x = cx + dx / d * R; z = cz + dz / d * R; }
+      else { const l = x - b.x0, r = b.x1 - x, f = z - b.z0, bk = b.z1 - z, m = Math.min(l, r, f, bk);
+        if (m === l) x = b.x0 - R; else if (m === r) x = b.x1 + R; else if (m === f) z = b.z0 - R; else z = b.z1 + R; }
+    }
+  }
+  return [x, z];
+}
+
+// ------------------------------------------------------------------ dialog ---
+let LANG = 'ar';
+const pick = v => (v[LANG] || v.ar);
+const promptEl = document.getElementById('prompt'), dialogEl = document.getElementById('dialog');
+const lineEl = document.getElementById('line'), youEl = document.getElementById('you'), optsEl = document.getElementById('options');
+const stepEls = [...document.querySelectorAll('#steps i')], bars = [...document.querySelectorAll('#speaking i')];
+let talking = null, nearest = null, audio = null, analyser = null, audioCtx = null, typing = null;
+
+function say(c, entry) {
+  return new Promise(resolve => {
+    clearInterval(typing);
+    const text = pick(entry);
+    let i = 0;
+    lineEl.textContent = '';
+    typing = setInterval(() => { lineEl.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(typing); }, 28);
+    if (audio) audio.pause();
+    audio = new Audio(`${c.audio}/${entry.id}.${c.ext || 'mp3'}`);
+    try {
+      audioCtx = audioCtx || new AudioContext();
+      const src = audioCtx.createMediaElementSource(audio);
+      analyser = audioCtx.createAnalyser(); analyser.fftSize = 64;
+      src.connect(analyser); analyser.connect(audioCtx.destination);
+    } catch (e) { analyser = null; }
+    const done = () => { analyser = null; lineEl.textContent = text; resolve(); };
+    audio.onended = done;
+    audio.play().catch(() => setTimeout(done, text.length * 60));
+  });
+}
+function options(list, onPick) {
+  optsEl.innerHTML = '';
+  for (const o of list) {
+    const b = document.createElement('button');
+    b.textContent = o.label;
+    if (o.muted) b.className = 'muted';
+    b.onclick = () => { optsEl.innerHTML = ''; onPick(o); };
+    optsEl.appendChild(b);
+  }
+}
+let session = 0;
+async function startDialog(c) {
+  const id = ++session;
+  talking = c;
+  document.body.classList.add('talking');
+  promptEl.style.display = 'none';
+  dialogEl.style.display = 'block';
+  document.getElementById('avatar').src = c.avatar;
+  document.getElementById('docname').textContent = pick(c.name);
+  document.getElementById('docrole').textContent = pick(c.role);
+  youEl.style.display = 'none'; optsEl.innerHTML = '';
+  stepEls.forEach(s => s.classList.remove('on'));
+  const D = c.data;
+  await say(c, D.greeting);
+  for (let r = 0; r < D.rounds.length; r++) {
+    if (id !== session) return;
+    const chosen = await new Promise(res => options(D.rounds[r].options.map(o => ({ label: pick(o.q), o })), x => res(x.o)));
+    stepEls[r].classList.add('on');
+    youEl.style.display = 'block';
+    youEl.textContent = (LANG === 'ar' ? 'أنت: ' : 'You: ') + pick(chosen.q);
+    await say(c, { id: chosen.id, ...chosen.a });
+  }
+  if (id !== session) return;
+  stepEls[2].classList.add('on');
+  youEl.style.display = 'none';
+  await say(c, D.closing);
+  if (id !== session) return;
+  options([{ label: LANG === 'ar' ? 'شكراً يا عبدالله' : 'Thank you, Abdullah' }, { label: LANG === 'ar' ? 'ابدأ من جديد' : 'Start again', muted: true, again: true }],
+    o => { if (o.again) startDialog(c); else endDialog(); });
+}
+function endDialog() {
+  session++;
+  if (audio) audio.pause();
+  talking = null;
+  document.body.classList.remove('talking');
+  dialogEl.style.display = 'none';
+  vr.hideDialog();
+}
+document.getElementById('closeTalk').onclick = () => endDialog();
+document.getElementById('talk').onclick = () => { if (nearest) startDialog(nearest); };
+addEventListener('keydown', e => { if (e.code === 'Escape' && talking) endDialog(); });
+
+const langBtn = document.getElementById('lang');
+function setLang(l) { LANG = l; langBtn.textContent = l === 'ar' ? 'English' : 'عربي'; }
+langBtn.onclick = () => setLang(LANG === 'ar' ? 'en' : 'ar');
+
+// --------------------------------------------------------------- start / XR ---
+// Immersive VR session (Quest browser). The DOM UI is invisible inside the headset, so VR gets 3D panels below.
+let xrSession = null;
+async function enterVR() {
+  if (!navigator.xr || !(await navigator.xr.isSessionSupported('immersive-vr').catch(() => false))) {
+    alert(LANG === 'ar' ? 'افتح الصفحة من متصفح الميتا كويست عشان تدخل VR' : 'Open this page in the Meta Quest browser to enter VR');
+    return;
+  }
+  if (audioCtx) audioCtx.resume();
+  xrSession = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking'] });
+  xrSession.addEventListener('end', () => { xrSession = null; vr.hideDialog(); });
+  await renderer.xr.setSession(xrSession);
+}
+document.getElementById('vrTop').onclick = enterVR;
+const statusEl = document.getElementById('status'), goBtn = document.getElementById('go'), goVRBtn = document.getElementById('goVR');
+statusEl.textContent = 'Loading accident site…';
+await Promise.all([
+  ...CHARACTERS.map(loadCharacter),
+  car('suv', -1.4, -3.4, 4, 5.2, true),
+  car('coupe', 4.4, -4.2, 16, 4.8),
+  ...[[-18, 6], [-24, 9], [16, 7], [26, 5], [34, 10]].map(([x, z], k) => palm(x, z, 7.5 + (k % 3), k)),
+]).catch(e => console.warn('Some models failed', e));
+statusEl.textContent = '';
+goBtn.disabled = goVRBtn.disabled = false;
+function begin() {
+  document.getElementById('start').style.display = 'none';
+  audioCtx = audioCtx || new AudioContext();
+  audioCtx.resume();
+}
+goBtn.onclick = begin;
+goVRBtn.onclick = () => { begin(); enterVR(); };
+
+// ------------------------------------------------- browser: go-to + walk pad ---
+const hold = {};
+for (const el of document.querySelectorAll('[data-hold]')) {
+  const k = el.dataset.hold;
+  el.addEventListener('pointerdown', e => { hold[k] = true; el.setPointerCapture(e.pointerId); e.preventDefault(); });
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) el.addEventListener(ev, () => { hold[k] = false; });
+}
+function goTo(c) {
+  const by = c.baseYaw || 0, d = 1.6;
+  const [x, z] = collide(c.pos[0] + Math.sin(by) * d, c.pos[1] + Math.cos(by) * d);
+  player.position.x = x; player.position.z = z;
+  yaw = Math.atan2(-(c.pos[0] - x), -(c.pos[1] - z)); pitch = -0.08;
+}
+for (const el of document.querySelectorAll('[data-goto]'))
+  el.onclick = () => goTo(CHARACTERS.find(c => c.key === el.dataset.goto));
+
+// ------------------------------------------------------------- VR panels ---
+// Inside the headset the DOM is invisible, so the dialogue is drawn on a canvas panel in front of you.
+// Answer buttons are big (~8 cm tall at arm's length) and you pick them with the controller laser + trigger.
+// The panel mirrors the DOM dialogue, so the dialogue logic itself is shared with the browser mode.
+const vr = (() => {
+  const W = 1200, H = 1300, PW = 0.82, PH = PW * H / W;
+  const cnv = document.createElement('canvas'); cnv.width = W; cnv.height = H;
+  const g = cnv.getContext('2d');
+  const tex = new THREE.CanvasTexture(cnv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(PW, PH), new THREE.MeshBasicMaterial({ map: tex, transparent: true, toneMapped: false, fog: false }));
+  panel.visible = false; panel.renderOrder = 10; scene.add(panel);
+
+  const pc = document.createElement('canvas'); pc.width = 1140; pc.height = 240;
+  const pg = pc.getContext('2d');
+  const ptex = new THREE.CanvasTexture(pc); ptex.colorSpace = THREE.SRGBColorSpace;
+  const prompt = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.2), new THREE.MeshBasicMaterial({ map: ptex, transparent: true, toneMapped: false, fog: false }));
+  prompt.visible = false; prompt.renderOrder = 10; scene.add(prompt);
+
+  const avatars = {};
+  for (const c of CHARACTERS) { const i = new Image(); i.src = c.avatar; avatars[c.avatar] = i; }
+  let rects = [], sig = '', hover = -1, promptSig = '', lastDraw = 0;
+  const $ = id => document.getElementById(id);
+
+  function wrap(text, maxW) {
+    const words = text.split(/\s+/).filter(Boolean), lines = []; let cur = '';
+    for (const w of words) { const t = cur ? cur + ' ' + w : w; if (g.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }
+    if (cur) lines.push(cur);
+    return lines;
+  }
+  const rr = (x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r); };
+  function draw() {
+    const rtl = LANG === 'ar', P = 48, X = rtl ? W - P : P;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = 'rgba(22,18,34,0.96)'; rr(0, 0, W, H, 56); g.fill();
+    g.strokeStyle = 'rgba(107,71,245,0.8)'; g.lineWidth = 4; rr(2, 2, W - 4, H - 4, 54); g.stroke();
+    g.direction = rtl ? 'rtl' : 'ltr'; g.textAlign = rtl ? 'right' : 'left'; g.textBaseline = 'alphabetic';
+    rects = [];
+    const av = avatars[$('avatar').getAttribute('src')], AS = 120, ax = rtl ? W - P - AS : P;
+    g.save(); g.beginPath(); g.arc(ax + AS / 2, P + AS / 2, AS / 2, 0, Math.PI * 2); g.fillStyle = '#fff'; g.fill(); g.clip();
+    if (av && av.complete) g.drawImage(av, ax, P, AS, AS);
+    g.restore();
+    g.strokeStyle = '#6B47F5'; g.lineWidth = 6; g.beginPath(); g.arc(ax + AS / 2, P + AS / 2, AS / 2, 0, Math.PI * 2); g.stroke();
+    const tx = rtl ? W - P - AS - 28 : P + AS + 28;
+    g.fillStyle = '#fff'; g.font = '800 54px Tajawal'; g.fillText($('docname').textContent, tx, P + 62);
+    g.fillStyle = 'rgba(255,255,255,0.72)'; g.font = '500 34px Tajawal'; g.fillText($('docrole').textContent, tx, P + 110);
+    const cw = 170, ch = 88, cx = rtl ? P : W - P - cw, cy = P + 16;
+    g.fillStyle = hover === 99 ? 'rgba(220,60,70,0.9)' : 'rgba(255,255,255,0.1)'; rr(cx, cy, cw, ch, 26); g.fill();
+    g.save(); g.textAlign = 'center'; g.fillStyle = '#fff'; g.font = '800 38px Tajawal'; g.fillText(rtl ? '✕ إنهاء' : '✕ End', cx + cw / 2, cy + 58); g.restore();
+    rects.push({ id: 99, x: cx, y: cy, w: cw, h: ch });
+    let y = P + AS + 40;
+    const you = $('you');
+    if (you.style.display !== 'none' && you.textContent) {
+      g.fillStyle = '#C8BEFF'; g.font = '600 36px Tajawal';
+      for (const l of wrap(you.textContent, W - 2 * P)) { y += 46; g.fillText(l, X, y); }
+      y += 14;
+    }
+    g.fillStyle = '#fff'; g.font = '500 46px Tajawal';
+    const top = y;
+    for (const l of wrap($('line').textContent, W - 2 * P)) { y += 68; g.fillText(l, X, y); }
+    y = Math.max(y, top + 68 * 3) + 34;
+    [...document.querySelectorAll('#options button')].forEach((btn, i) => {
+      g.font = '700 42px Tajawal';
+      const ls = wrap(btn.textContent, W - 2 * P - 60), bh = Math.max(116, 44 + ls.length * 56);
+      const muted = btn.classList.contains('muted'), hov = hover === i;
+      g.fillStyle = hov ? 'rgba(107,71,245,0.95)' : muted ? 'rgba(255,255,255,0.08)' : 'rgba(107,71,245,0.28)';
+      rr(P, y, W - 2 * P, bh, 30); g.fill();
+      g.strokeStyle = hov ? '#fff' : muted ? 'rgba(255,255,255,0.3)' : 'rgba(107,71,245,0.95)'; g.lineWidth = hov ? 6 : 4; g.stroke();
+      g.fillStyle = '#fff';
+      ls.forEach((l, k) => g.fillText(l, rtl ? W - P - 30 : P + 30, y + bh / 2 + 15 - (ls.length - 1) * 28 + k * 56));
+      rects.push({ id: i, x: P, y, w: W - 2 * P, h: bh, el: btn });
+      y += bh + 22;
+    });
+    const steps = [...document.querySelectorAll('#steps i')], sw = (W - 2 * P - 32) / 3;
+    steps.forEach((st, i) => { g.fillStyle = st.classList.contains('on') ? '#6B47F5' : 'rgba(255,255,255,0.15)'; rr(P + i * (sw + 16), H - P - 12, sw, 12, 6); g.fill(); });
+    tex.needsUpdate = true;
+  }
+  function drawPrompt(text) {
+    const w = pc.width, h = pc.height;
+    pg.clearRect(0, 0, w, h);
+    pg.fillStyle = hover === 50 ? '#8a6bff' : '#6B47F5'; pg.beginPath(); pg.roundRect(6, 6, w - 12, h - 12, 60); pg.fill();
+    pg.strokeStyle = 'rgba(255,255,255,0.6)'; pg.lineWidth = 6; pg.stroke();
+    pg.direction = LANG === 'ar' ? 'rtl' : 'ltr'; pg.textAlign = 'center'; pg.fillStyle = '#fff';
+    pg.font = '800 66px Tajawal'; pg.fillText(text, w / 2, 112);
+    pg.font = '500 40px Tajawal'; pg.fillStyle = 'rgba(255,255,255,0.85)';
+    pg.fillText(LANG === 'ar' ? 'وجّه الليزر واضغط Trigger · أو زر A' : 'Point & pull the trigger · or press A', w / 2, 186);
+    ptex.needsUpdate = true;
+  }
+  const eye = new THREE.Vector3();
+  function place(c) {
+    camera.getWorldPosition(eye);
+    const to = new THREE.Vector3(c.group.position.x - eye.x, 0, c.group.position.z - eye.z).normalize();
+    const right = new THREE.Vector3(-to.z, 0, to.x);
+    panel.position.copy(eye).addScaledVector(to, 0.85).addScaledVector(right, 0.12);
+    panel.position.y = eye.y - 0.5;
+    panel.lookAt(eye.x, panel.position.y + 0.25, eye.z);
+    panel.visible = true; sig = ''; hover = -1;
+  }
+  return {
+    panel, prompt,
+    hideDialog() { panel.visible = false; },
+    update(inXR, t) {
+      if (!inXR) { panel.visible = prompt.visible = false; return; }
+      if (talking) {
+        if (!panel.visible) place(talking);
+        const s2 = [LANG, $('docname').textContent, $('you').textContent, $('you').style.display, $('line').textContent,
+          ...[...document.querySelectorAll('#options button')].map(b => b.textContent),
+          ...[...document.querySelectorAll('#steps i')].map(i => i.className), hover].join('|');
+        if (s2 !== sig && t - lastDraw > 0.07) { sig = s2; lastDraw = t; draw(); }
+      } else panel.visible = false;
+      prompt.visible = !talking && !!nearest;
+      if (prompt.visible) {
+        const label = pick(nearest.prompt), ps = label + LANG + (hover === 50);
+        if (ps !== promptSig) { promptSig = ps; drawPrompt(label); }
+        camera.getWorldPosition(eye);
+        prompt.position.set(nearest.group.position.x, nearest.height + 0.38, nearest.group.position.z);
+        prompt.lookAt(eye.x, prompt.position.y, eye.z);
+      }
+    },
+    hit(h) {
+      if (h.object === prompt) return 50;
+      const px = h.uv.x * W, py = (1 - h.uv.y) * H;
+      const r = rects.find(r => px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h);
+      return r ? r.id : null;
+    },
+    setHover(id) { hover = id ?? -1; },
+    press(id) {
+      if (id === 50) { if (nearest && !talking) startDialog(nearest); return; }
+      if (id === 99) { endDialog(); return; }
+      const r = rects.find(r => r.id === id);
+      if (r && r.el) { r.el.click(); sig = ''; }
+    },
+  };
+})();
+
+// Controllers: a laser from each hand, trigger = click
+const ray = new THREE.Raycaster(), rayMat = new THREE.Matrix4();
+const lasers = [0, 1].map(i => {
+  const ctl = renderer.xr.getController(i);
+  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0, -1)]),
+    new THREE.LineBasicMaterial({ color: '#b9a8ff' }));
+  line.scale.z = 3; ctl.add(line);
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(0.012, 12, 8), new THREE.MeshBasicMaterial({ color: '#ffffff' }));
+  dot.visible = false; scene.add(dot);
+  ctl.userData = { line, dot, target: null };
+  ctl.addEventListener('selectstart', () => { if (ctl.userData.target != null) vr.press(ctl.userData.target); });
+  player.add(ctl);
+  return ctl;
+});
+window.__accident = { player, CHARACTERS, startDialog, goTo, setYaw: v => { yaw = v; }, setPitch: v => { pitch = v; } };   // test hook
+function updateLasers() {
+  let hov = null;
+  const targets = [vr.panel, vr.prompt].filter(m => m.visible);
+  for (const ctl of lasers) {
+    const u = ctl.userData;
+    rayMat.identity().extractRotation(ctl.matrixWorld);
+    ray.ray.origin.setFromMatrixPosition(ctl.matrixWorld);
+    ray.ray.direction.set(0, 0, -1).applyMatrix4(rayMat);
+    const hit = targets.length ? ray.intersectObjects(targets, false)[0] : null;
+    u.target = hit ? vr.hit(hit) : null;
+    u.line.scale.z = hit ? hit.distance : 3;
+    u.line.visible = targets.length > 0;
+    u.dot.visible = !!hit; if (hit) u.dot.position.copy(hit.point);
+    if (u.target != null) hov = u.target;
+  }
+  vr.setHover(hov);
+}
+
+// ------------------------------------------------------------------- loop ---
+const clock3 = new THREE.Clock();
+const dir = new THREE.Vector3(), tmp = new THREE.Vector3();
+const freq = new Uint8Array(32);
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock3.getDelta(), 0.05), t = clock3.elapsedTime;
+  const inXR = renderer.xr.isPresenting;
+
+  let mx = 0, mz = 0;
+  if (!talking) {
+    if (keys.has('KeyW') || keys.has('ArrowUp')) mz += 1;
+    if (keys.has('KeyS') || keys.has('ArrowDown')) mz -= 1;
+    if (keys.has('KeyD')) mx += 1;
+    if (keys.has('KeyA')) mx -= 1;
+    if (keys.has('ArrowLeft')) yaw += 1.6 * dt;
+    if (keys.has('ArrowRight')) yaw -= 1.6 * dt;
+    if (hold.fwd) mz += 1;
+    if (hold.back) mz -= 1;
+    if (hold.turnL) yaw += 1.4 * dt;
+    if (hold.turnR) yaw -= 1.4 * dt;
+    const s = renderer.xr.getSession();
+    if (s) for (const src of s.inputSources) {
+      const gp = src.gamepad; if (!gp) continue;
+      const ax = gp.axes.length >= 4 ? [gp.axes[2], gp.axes[3]] : [gp.axes[0], gp.axes[1]];
+      if (src.handedness === 'left') { mx += ax[0]; mz -= ax[1]; }
+      if (src.handedness === 'right' && gp.buttons[4]?.pressed && nearest && !aHeld) startDialog(nearest);
+      if (src.handedness === 'right') aHeld = !!gp.buttons[4]?.pressed;
+    }
+  }
+  { const xs = renderer.xr.getSession();   // B ends the conversation in VR
+    if (xs && talking) for (const src of xs.inputSources) if (src.handedness === 'right' && src.gamepad?.buttons[5]?.pressed) endDialog(); }
+  player.rotation.y = yaw;
+  if (!inXR) camera.rotation.set(pitch, 0, 0, 'YXZ');
+  camera.getWorldDirection(dir); dir.y = 0; dir.normalize();
+  const len = Math.hypot(mx, mz);
+  if (len > 0.1) {
+    const speed = (keys.has('ShiftLeft') ? 3 : 1.6) * dt / Math.max(1, len);
+    let x = player.position.x + (dir.x * mz - dir.z * mx) * speed;
+    let z = player.position.z + (dir.z * mz + dir.x * mx) * speed;
+    [x, z] = collide(x, z);
+    player.position.x = x; player.position.z = z;
+  }
+
+  // The surveyor faces the visitor when close, breathes, nods while speaking
+  camera.getWorldPosition(tmp);
+  const level = analyser ? freq.slice(2, 12).reduce((a, v) => a + v, 0) / (10 * 255) : 0;
+  let best = null, bestD = 2.6;
+  for (const c of CHARACTERS) {
+    if (!c.group) continue;
+    const dx = tmp.x - c.group.position.x, dz = tmp.z - c.group.position.z, d = Math.hypot(dx, dz);
+    const base = c.baseYaw || 0;
+    let target = base;
+    if (d < 6) { let a = Math.atan2(dx, dz) - base; a = Math.atan2(Math.sin(a), Math.cos(a)); target = base + Math.max(-c.maxTurn, Math.min(c.maxTurn, a)); }
+    c.group.rotation.y += (target - c.group.rotation.y) * Math.min(1, dt * 3);
+    const body = c.group.children[0];
+    body.scale.y = body.scale.x * (1 + Math.sin(t * 1.6 + c.pos[0]) * 0.004);
+    body.rotation.z = Math.sin(t * 0.45 + c.pos[0]) * 0.012;
+    body.rotation.x = (talking === c ? -level * 0.06 : 0) + Math.sin(t * 0.7) * 0.004;
+    if (d < bestD) { best = c; bestD = d; }
+  }
+  nearest = best;
+  if (!talking) {
+    promptEl.style.display = nearest ? 'block' : 'none';
+    if (nearest) document.getElementById('talkLabel').textContent = pick(nearest.prompt);
+  } else if (!inXR) {
+    const g = talking.group.position;
+    const want = Math.atan2(-(g.x - player.position.x), -(g.z - player.position.z));
+    let diff = want - yaw; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+    yaw += diff * Math.min(1, dt * 2.5);
+    const dist = Math.hypot(g.x - player.position.x, g.z - player.position.z);
+    pitch += (Math.atan2(talking.height - 0.15 - 1.65, dist) - pitch) * Math.min(1, dt * 2.5);
+  }
+  if (analyser) { analyser.getByteFrequencyData(freq); bars.forEach((b, i) => { b.style.height = `${4 + freq[i * 3] / 255 * 14}px`; }); }
+  else bars.forEach(b => { b.style.height = '4px'; });
+
+  vr.update(inXR, t);
+  if (inXR) updateLasers();
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>

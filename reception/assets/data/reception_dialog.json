@@ -1,0 +1,37 @@
+{
+  "_note": "PLACEHOLDER WORDING - must be reviewed by Tawuniya / the hospital before any public use. Audio files are generated from 'ar' into Web/media/reception/<id>.mp3.",
+  "doctor_name": { "ar": "سارة", "en": "Sarah" },
+  "role": { "ar": "موظفة الاستقبال", "en": "Receptionist" },
+  "greeting": { "id": "greeting",
+    "ar": "هلا والله، أهلاً فيك في المستشفى. كيف أقدر أخدمك؟",
+    "en": "Hello and welcome to the hospital. How can I help you?" },
+  "rounds": [
+    { "prompt": { "ar": "اختر سؤالك الأول", "en": "Choose your first question" },
+      "options": [
+        { "id": "r1a", "q": { "ar": "عندي موعد، وين أسجّل؟", "en": "I have an appointment — where do I check in?" },
+          "a": { "ar": "حيّاك، عطني هويتك وبطاقة التعاونية الطبية، وأسجّلك الحين خلال دقيقة.",
+                 "en": "Welcome — give me your ID and your Tawuniya medical card and I'll check you in within a minute." } },
+        { "id": "r1b", "q": { "ar": "ما عندي موعد، أقدر أشوف دكتور اليوم؟", "en": "I don't have an appointment — can I see a doctor today?" },
+          "a": { "ar": "أكيد، عندنا مواعيد متاحة اليوم. أحجز لك مع أقرب دكتور متوفر، والموافقة على تأمينك تطلع إلكترونياً.",
+                 "en": "Of course, we have slots today. I'll book you with the next available doctor and your insurance approval comes through electronically." } },
+        { "id": "r1c", "q": { "ar": "نسيت بطاقة التأمين، وش أسوي؟", "en": "I forgot my insurance card — what do I do?" },
+          "a": { "ar": "ولا يهمك، افتح تطبيق التعاونية واعرض البطاقة الرقمية، أو أتحقق منها برقم هويتك.",
+                 "en": "No problem — open the Tawuniya app and show your digital card, or I can verify it with your ID number." } }
+      ] },
+    { "prompt": { "ar": "اختر سؤالك الثاني", "en": "Choose your second question" },
+      "options": [
+        { "id": "r2a", "q": { "ar": "كم مدة الانتظار تقريباً؟", "en": "About how long is the wait?" },
+          "a": { "ar": "الانتظار حوالي عشر دقائق، وبيطلع رقمك على الشاشة فوق، وتجيك رسالة على جوالك.",
+                 "en": "About ten minutes. Your number will show on the screen above, and you'll get a text message." } },
+        { "id": "r2b", "q": { "ar": "وين الصيدلية؟", "en": "Where is the pharmacy?" },
+          "a": { "ar": "الصيدلية على يمينك بعد العيادات، وإذا تبي توصيل الأدوية للبيت تقدر تطلبها من التطبيق.",
+                 "en": "The pharmacy is on your right past the clinics — or order home delivery from the app." } },
+        { "id": "r2c", "q": { "ar": "هل في رسوم أدفعها؟", "en": "Are there any fees to pay?" },
+          "a": { "ar": "حسب فئة وثيقتك ممكن يكون في نسبة تحمّل بسيطة، وأوضّحها لك قبل الكشف.",
+                 "en": "Depending on your policy class there may be a small co-pay — I'll confirm it before your visit." } }
+      ] }
+  ],
+  "closing": { "id": "closing",
+    "ar": "تفضّل استريح في منطقة الانتظار، والله يعطيك العافية.",
+    "en": "Please have a seat in the waiting area — take care." }
+}
