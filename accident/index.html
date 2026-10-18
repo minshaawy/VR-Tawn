@@ -86,6 +86,9 @@
   <div class="chip" id="where">موقع الحادث · Accident site</div>
   <div class="btns">
     <a class="tbtn" href="../">🏠 الرئيسية</a>
+    <a class="tbtn" href="../reception/" data-portal="0" style="text-decoration:none;display:inline-flex;align-items:center;box-sizing:border-box">🏥 الاستقبال</a>
+    <a class="tbtn" href="../showroom/" data-portal="1" style="text-decoration:none;display:inline-flex;align-items:center;box-sizing:border-box">🚘 معرض السيارات</a>
+    <a class="tbtn" href="../home/" data-portal="2" style="text-decoration:none;display:inline-flex;align-items:center;box-sizing:border-box">👴 البيت</a>
     <button class="tbtn" id="lang">English</button>
     <button class="tbtn vr" id="vrTop">ادخل VR 🥽</button>
   </div>
@@ -128,6 +131,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { addPortal, arrival } from '../portal.js';
 
 // Desert road accident site in metres: x right (along the road), y up, z towards the visitor.
 // Same layout as the Unreal map (Scripts/world_scenes.py build_accident): road centred on z=-6, shoulder z[0,2.5].
@@ -485,6 +489,10 @@ langBtn.onclick = () => setLang(LANG === 'ar' ? 'en' : 'ar');
 // Immersive VR session (Quest browser). The DOM UI is invisible inside the headset, so VR gets 3D panels below.
 let xrSession = null;
 async function enterVR() {
+  if (!window.isSecureContext) {   // WebXR only exists on https; GitHub Pages serves http until the domain's certificate is issued
+    alert(LANG === 'ar' ? 'الـ VR يشتغل بس على https. افتح الرابط وهو يبدأ بـ https://' : 'VR only works over https. Open the link starting with https://');
+    return;
+  }
   if (!navigator.xr || !(await navigator.xr.isSessionSupported('immersive-vr').catch(() => false))) {
     alert(LANG === 'ar' ? 'افتح الصفحة من متصفح الميتا كويست عشان تدخل VR' : 'Open this page in the Meta Quest browser to enter VR');
     return;
@@ -513,6 +521,15 @@ function begin() {
 goBtn.onclick = begin;
 goVRBtn.onclick = () => { begin(); enterVR(); };
 
+// Portal + top-bar link to the other scene (keeps the language; in VR it asks the next page to re-enter VR)
+const portals = [
+  addPortal({ THREE, scene, ...{ x: 4.5, z: 5.5, face: [0, 8], href: '../reception/', color: '#3FB8C9', label: { ar: 'روح لاستقبال المستشفى', en: 'Go to the hospital reception' } }, getLang: () => LANG, inXR: () => renderer.xr.isPresenting }),
+  addPortal({ THREE, scene, ...{ x: -3.6, z: 6.0, face: [0, 8], href: '../showroom/', color: '#6B47F5', label: { ar: 'روح لمعرض السيارات', en: 'Go to the car showroom' } }, getLang: () => LANG, inXR: () => renderer.xr.isPresenting }),
+  addPortal({ THREE, scene, ...{ x: -7.5, z: 8.0, face: [0, 8], href: '../home/', color: '#2FA36B', label: { ar: 'روح لبيت أبو محمد', en: 'Go to Abu Mohammed\'s home' } }, getLang: () => LANG, inXR: () => renderer.xr.isPresenting }),
+];
+for (const a of document.querySelectorAll('[data-portal]')) a.onclick = e => { e.preventDefault(); portals[+a.dataset.portal].go(); };
+if (arrival({ setLang, enterVR })) goVRBtn.focus();
+
 // ------------------------------------------------- browser: go-to + walk pad ---
 const hold = {};
 for (const el of document.querySelectorAll('[data-hold]')) {
@@ -538,7 +555,7 @@ const vr = (() => {
   const cnv = document.createElement('canvas'); cnv.width = W; cnv.height = H;
   const g = cnv.getContext('2d');
   const tex = new THREE.CanvasTexture(cnv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
-  const panel = new THREE.Mesh(new THREE.PlaneGeometry(PW, PH), new THREE.MeshBasicMaterial({ map: tex, transparent: true, toneMapped: false, fog: false }));
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(PW, PH), new THREE.MeshBasicMaterial({ map: tex, transparent: true, toneMapped: false, fog: false, depthTest: false }));
   panel.visible = false; panel.renderOrder = 10; scene.add(panel);
 
   const pc = document.createElement('canvas'); pc.width = 1140; pc.height = 240;
@@ -673,27 +690,28 @@ const lasers = [0, 1].map(i => {
   const dot = new THREE.Mesh(new THREE.SphereGeometry(0.012, 12, 8), new THREE.MeshBasicMaterial({ color: '#ffffff' }));
   dot.visible = false; scene.add(dot);
   ctl.userData = { line, dot, target: null };
-  ctl.addEventListener('selectstart', () => { if (ctl.userData.target != null) vr.press(ctl.userData.target); });
+  ctl.addEventListener('selectstart', () => { const tg = ctl.userData.target; if (tg?.go) tg.go(); else if (tg != null) vr.press(tg); });
   player.add(ctl);
   return ctl;
 });
 window.__accident = { player, CHARACTERS, startDialog, goTo, setYaw: v => { yaw = v; }, setPitch: v => { pitch = v; } };   // test hook
 function updateLasers() {
   let hov = null;
-  const targets = [vr.panel, vr.prompt].filter(m => m.visible);
+  const targets = [vr.panel, vr.prompt, ...portals.flatMap(p => p.targets)].filter(m => m.visible);
   for (const ctl of lasers) {
     const u = ctl.userData;
     rayMat.identity().extractRotation(ctl.matrixWorld);
     ray.ray.origin.setFromMatrixPosition(ctl.matrixWorld);
     ray.ray.direction.set(0, 0, -1).applyMatrix4(rayMat);
     const hit = targets.length ? ray.intersectObjects(targets, false)[0] : null;
-    u.target = hit ? vr.hit(hit) : null;
+    u.target = hit ? (hit.object.userData.portal || vr.hit(hit)) : null;
     u.line.scale.z = hit ? hit.distance : 3;
     u.line.visible = targets.length > 0;
     u.dot.visible = !!hit; if (hit) u.dot.position.copy(hit.point);
     if (u.target != null) hov = u.target;
   }
-  vr.setHover(hov);
+  for (const p of portals) p.setHover(hov === p);
+  vr.setHover(hov?.go ? null : hov);
 }
 
 // ------------------------------------------------------------------- loop ---
@@ -772,6 +790,7 @@ renderer.setAnimationLoop(() => {
   else bars.forEach(b => { b.style.height = '4px'; });
 
   vr.update(inXR, t);
+  camera.getWorldPosition(tmp); for (const p of portals) p.update(t, tmp.x, tmp.z);
   if (inXR) updateLasers();
   renderer.render(scene, camera);
 });

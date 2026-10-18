@@ -5,7 +5,7 @@
 <script src="gate.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tawuniya VR</title>
-<meta name="description" content="تجربتين VR من التعاونية: استقبال المستشفى وموقع الحادث. تشتغل في متصفح Meta Quest.">
+<meta name="description" content="تجارب VR من التعاونية: استقبال المستشفى وموقع الحادث ومعرض السيارات والرعاية في البيت. تشتغل في متصفح Meta Quest.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -28,6 +28,9 @@
   .thumb::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg, transparent 45%, rgba(14,12,20,.92)); }
   .reception .thumb { background-image:url(assets/reception.jpg), linear-gradient(135deg, #3FB8C9, #34295E); }
   .accident .thumb { background-image:url(assets/accident.jpg), linear-gradient(135deg, #F2A33A, #34295E); }
+  .home .thumb { background-image:url(assets/home.jpg), linear-gradient(135deg, #2FA36B, #34295E); }
+  .home .cta { background:#2FA36B; }
+  .showroom .thumb { background-image:url(assets/showroom.jpg), linear-gradient(135deg, #6B47F5, #1b1726); }
   .info { padding:6px 30px 30px; position:relative; }
   .tag { display:inline-block; font-size:18px; font-weight:700; padding:6px 14px; border-radius:999px; background:rgba(107,71,245,.35); border:1px solid rgba(255,255,255,.2); margin-bottom:10px; }
   h2 { margin:0 0 6px; font-size:34px; font-weight:800; }
@@ -64,6 +67,24 @@
         <span class="tag">تأمين المركبات</span>
         <h2>موقع الحادث</h2>
         <p>عبدالله معاين المطالبات معاك في موقع الحادث: نجم، ورفع المطالبة، والمساعدة على الطريق.</p>
+        <span class="cta">ادخل المشهد ←</span>
+      </div>
+    </a>
+    <a class="scene showroom" href="showroom/">
+      <div class="thumb"></div>
+      <div class="info">
+        <span class="tag">تأمين المركبات</span>
+        <h2>معرض السيارات</h2>
+        <p>تجوّل بين السيارات وكلّم سلطان مستشار التأمين عن الشامل وضد الغير والتعاونية درايف.</p>
+        <span class="cta">ادخل المشهد ←</span>
+      </div>
+    </a>
+    <a class="scene home" href="home/">
+      <div class="thumb"></div>
+      <div class="info">
+        <span class="tag">الرعاية الصحية في البيت</span>
+        <h2>بيت أبو محمد</h2>
+        <p>أبوك تعبان وما يقدر يطلع. ساعده يكلّم الدكتور بالفيديو من تطبيق التعاونية ويوصله الدواء لين البيت.</p>
         <span class="cta">ادخل المشهد ←</span>
       </div>
     </a>
