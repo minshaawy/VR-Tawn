@@ -1,0 +1,105 @@
+{
+  "_note": "Care Hub scenario - Dana, Care Hub representative at the Care Hub stand in the clinic lobby. Explains the app flow from scenes 1-4 of the scenario. Review before public use. Audio: media/carehub/<id>.mp3.",
+  "doctor_name": {
+    "ar": "دانة",
+    "en": "Dana"
+  },
+  "role": {
+    "ar": "مندوبة كيرهب",
+    "en": "Care Hub representative"
+  },
+  "greeting": {
+    "id": "greeting",
+    "ar": "هلا والله! أنا دانة من كيرهب. تبين أشرح لك كيف تاخذين عروض العيادات من التطبيق؟",
+    "en": "Hi! I'm Dana from Care Hub. Want me to show you how to get clinic offers from the app?"
+  },
+  "rounds": [
+    {
+      "prompt": {
+        "ar": "اسألي عن كيرهب",
+        "en": "Ask about Care Hub"
+      },
+      "options": [
+        {
+          "id": "k1a",
+          "q": {
+            "ar": "وش هي كيرهب بالضبط؟",
+            "en": "What exactly is Care Hub?"
+          },
+          "a": {
+            "ar": "كيرهب منصة تجمع عيادات معروفة في مكان واحد. تتصفحين خدمات الأسنان والجلدية والمختبرات وغيرها، تقارنين الخدمات والأسعار والخصومات، وتختارين اللي يناسبك.",
+            "en": "Care Hub brings well-known clinics together in one place. You browse dental, dermatology, lab and other services, compare services, prices and discounts, and pick what suits you."
+          }
+        },
+        {
+          "id": "k1b",
+          "q": {
+            "ar": "كيف آخذ القسيمة؟",
+            "en": "How do I get a voucher?"
+          },
+          "a": {
+            "ar": "تختارين الخدمة من التطبيق وتضغطين «احصل على القسيمة». تجيك رسالة تأكيد، ويطلع لك رمز QR خاص بالعرض في حسابك في قسم «قسائمي».",
+            "en": "Pick the service in the app and tap “Get the voucher”. You get a confirmation, and a QR code for the offer is issued inside your account under “My vouchers”."
+          }
+        },
+        {
+          "id": "k1c",
+          "q": {
+            "ar": "وبعدين كيف أحجز الموعد؟",
+            "en": "And how do I book the appointment?"
+          },
+          "a": {
+            "ar": "أول ما تطلع القسيمة يوصل إشعار للعيادة، وهم يتصلون عليك ويحددون لك الموعد اللي يناسبك، وتجيك رسالة تأكيد بالموعد.",
+            "en": "As soon as the voucher is issued the clinic gets a notification. They call you to set a time that suits you, and you receive an appointment confirmation."
+          }
+        }
+      ]
+    },
+    {
+      "prompt": {
+        "ar": "اسألي سؤال ثاني",
+        "en": "Ask another question"
+      },
+      "options": [
+        {
+          "id": "k2a",
+          "q": {
+            "ar": "السعر مضمون؟",
+            "en": "Is the price guaranteed?"
+          },
+          "a": {
+            "ar": "أي نعم. القسيمة تثبّت لك الخدمة والسعر من يوم ما تطلع لين تاريخ الانتهاء. مثلاً تنظيف الأسنان في عيادة الواحة الطبية بسعر كيرهب 200 ريال بدل 300.",
+            "en": "Yes. The voucher locks the service and price from the day it is issued until it expires. For example, teeth cleaning at Al Waha Medical is 200 riyals at the Care Hub price instead of 300."
+          }
+        },
+        {
+          "id": "k2b",
+          "q": {
+            "ar": "ولو غيّرت رأيي؟",
+            "en": "What if I change my mind?"
+          },
+          "a": {
+            "ar": "تقدرين تلغين القسيمة من التطبيق بضغطة زر قبل ما تستخدمينها، بدون أي رسوم، وتطلعين غيرها وقت ما تبين.",
+            "en": "You can cancel the voucher in the app with one tap before using it, with no fees, and issue a new one whenever you like."
+          }
+        },
+        {
+          "id": "k2c",
+          "q": {
+            "ar": "كيف أستخدمها في العيادة؟",
+            "en": "How do I use it at the clinic?"
+          },
+          "a": {
+            "ar": "يوم الموعد افتحي «قسائمي»، وورّي الاستقبال رمز الـQR، يمسحونه، وتطلع لك رسالة «تم استخدام القسيمة بنجاح»، وتدفعين السعر بعد الخصم في العيادة.",
+            "en": "On the day, open “My vouchers”, show the QR code at reception, they scan it, you see “Voucher redeemed successfully”, and you pay the discounted price at the clinic."
+          }
+        }
+      ]
+    }
+  ],
+  "closing": {
+    "id": "closing",
+    "ar": "نزّلي كيرهب، اكتشفي العيادات، احصلي على القسيمة، وتمتعي بالمزايا والعروض!",
+    "en": "Download Care Hub, discover clinics, get your voucher, and enjoy the perks and offers!"
+  }
+}

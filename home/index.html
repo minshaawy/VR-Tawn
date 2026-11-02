@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<script src="../gate.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Tawuniya Home Care VR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --brand:#6B47F5; --brand-dark:#34295E; --teal:#3FB8C9; --ok:#2FA36B; }
+  html, body { margin:0; height:100%; overflow:hidden; background:#0E0C14; color:#fff; font-family:Tajawal, system-ui, sans-serif; }
+  canvas#view { display:block; width:100%; height:100%; transition:filter .8s; }
+  canvas#view.blur { filter:blur(3px) brightness(.7); }
+  #top { position:fixed; top:16px; left:16px; right:16px; display:flex; justify-content:space-between; pointer-events:none; z-index:3; }
+  #top .chip { background:rgba(52,41,94,.85); border-radius:14px; padding:12px 18px; font-weight:800; font-size:20px; }
+  #top .tb, #top button { pointer-events:auto; text-decoration:none; font:800 19px Tajawal, system-ui, sans-serif; color:#fff; background:rgba(52,41,94,.88); border:2px solid rgba(255,255,255,.22); border-radius:14px; padding:12px 18px; cursor:pointer; }
+  /* Subtitles for the living-room scene */
+  #sub { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); width:min(720px, calc(100% - 32px)); display:none; z-index:3;
+         background:rgba(22,18,34,.9); border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:14px 16px; box-sizing:border-box; backdrop-filter:blur(8px); }
+  #sub .who { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  #sub img { width:44px; height:44px; border-radius:50%; border:2px solid var(--brand); background:#fff; }
+  #sub b { font-size:16px; } #sub small { display:block; opacity:.7; font-size:12px; }
+  #subline { font-size:19px; line-height:1.65; min-height:58px; }
+  #say { display:none; width:100%; margin-top:8px; font:600 17px Tajawal, system-ui, sans-serif; text-align:start; color:#fff; background:var(--brand);
+         border:0; border-radius:12px; padding:12px 14px; cursor:pointer; box-shadow:0 0 0 0 rgba(107,71,245,.6); animation:pulse 1.6s infinite; }
+  #say::before { content:'🗣️  '; }
+  #next { display:none !important; margin-inline-start:auto; font:700 14px Tajawal, system-ui, sans-serif; color:#fff; background:rgba(107,71,245,.35); border:1px solid rgba(107,71,245,.7); border-radius:10px; padding:7px 14px; cursor:pointer; }
+  /* Phone overlay */
+  #phoneWrap { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:4; }
+  #phone { width:min(370px, 92vw); height:min(760px, 94vh); background:#111; border-radius:46px; padding:12px; box-sizing:border-box;
+           box-shadow:0 30px 80px rgba(0,0,0,.6), inset 0 0 0 2px #333; position:relative; transform:translateY(85vh) rotate(-8deg); opacity:1;
+           transition:transform .9s cubic-bezier(.2,.9,.3,1.05); }
+  #phoneWrap.on #phone { transform:translateY(3vh) rotate(-2deg); }
+  #phoneWrap { align-items:flex-end; padding-bottom:0; }
+  #island { position:absolute; top:20px; left:50%; transform:translateX(-50%); width:110px; height:30px; background:#000; border-radius:16px; z-index:5; }
+  #app { width:100%; height:100%; border-radius:36px; overflow:hidden; background:#F5F4FA; color:#1f1a33; position:relative; }
+  .screen { position:absolute; inset:0; display:none; flex-direction:column; padding:58px 18px 18px; box-sizing:border-box; overflow-y:auto; animation:in .35s ease; }
+  .screen.on { display:flex; }
+  @keyframes in { from { opacity:0; transform:translateX(-18px); } to { opacity:1; transform:none; } }
+  .bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .bar img { height:30px; }
+  .bar .back { font-size:22px; color:var(--brand-dark); opacity:.6; }
+  h2 { font-size:21px; margin:4px 0 4px; color:var(--brand-dark); }
+  .muted { color:#6d6880; font-size:14px; margin:0 0 14px; }
+  .hero { background:linear-gradient(135deg, var(--brand-dark), var(--brand)); color:#fff; border-radius:20px; padding:16px; margin-bottom:14px; }
+  .hero b { font-size:18px; display:block; } .hero span { font-size:13px; opacity:.85; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .tile { background:#fff; border-radius:16px; padding:14px 12px; box-shadow:0 2px 10px rgba(52,41,94,.08); font-weight:700; font-size:14px; cursor:pointer; border:2px solid transparent; }
+  .tile i { display:block; font-style:normal; font-size:24px; margin-bottom:6px; }
+  .tile.hot { border-color:var(--brand); animation:pulse 1.6s infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 0 rgba(107,71,245,.45); } 50% { box-shadow:0 0 0 10px rgba(107,71,245,0); } }
+  .row { display:flex; align-items:center; gap:12px; background:#fff; border-radius:16px; padding:12px; margin-bottom:10px; box-shadow:0 2px 10px rgba(52,41,94,.08); cursor:pointer; border:2px solid transparent; }
+  .row:hover, .row.sel { border-color:var(--brand); }
+  .row img { width:48px; height:48px; border-radius:50%; object-fit:cover; }
+  .row b { display:block; font-size:16px; } .row span { font-size:13px; color:#6d6880; }
+  .row .ic { width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:24px; background:#EFEAFE; flex:none; }
+  .btn { margin-top:auto; font:800 17px Tajawal, system-ui, sans-serif; color:#fff; background:var(--brand); border:0; border-radius:14px; padding:14px; cursor:pointer; }
+  .btn:disabled { opacity:.4; }
+  .tag { display:inline-block; background:#E3F6EC; color:var(--ok); border-radius:8px; padding:3px 8px; font-size:12px; font-weight:700; }
+  /* Connecting */
+  #s-connect { align-items:center; justify-content:center; text-align:center; background:linear-gradient(160deg, var(--brand-dark), #1b1530); color:#fff; }
+  .rings { position:relative; width:150px; height:150px; margin-bottom:24px; }
+  .rings span { position:absolute; inset:0; border-radius:50%; border:2px solid rgba(255,255,255,.5); animation:ring 2s infinite; }
+  .rings span:nth-child(2) { animation-delay:.6s; } .rings span:nth-child(3) { animation-delay:1.2s; }
+  @keyframes ring { from { transform:scale(.4); opacity:1; } to { transform:scale(1.3); opacity:0; } }
+  .rings img { position:absolute; inset:35px; width:80px; height:80px; border-radius:50%; background:#fff; padding:6px; box-sizing:border-box; object-fit:contain; }
+  /* Video call */
+  #s-call { padding:0; background:#000; color:#fff; }
+  #feed { position:absolute; inset:0; background:url(media/home_care/doctor_call.jpg) center/cover; animation:kb 18s ease-in-out infinite alternate; }
+  @keyframes kb { from { transform:scale(1.04); } to { transform:scale(1.12) translateY(10px); } }
+  #feed.talk { filter:brightness(1.04); }
+  #pip { position:absolute; top:60px; left:14px; width:96px; height:128px; border-radius:14px; background:url(media/home_care/father_pip.jpg) center/cover; border:2px solid rgba(255,255,255,.8); }
+  #callTop { position:absolute; top:58px; right:14px; background:rgba(0,0,0,.45); border-radius:12px; padding:6px 10px; font-size:13px; }
+  #callTop b { display:block; font-size:15px; }
+  #cap { position:absolute; left:12px; right:12px; bottom:96px; background:rgba(0,0,0,.6); border-radius:14px; padding:10px 12px; font-size:16px; line-height:1.6; min-height:24px; }
+  #sheet { position:absolute; left:10px; right:10px; bottom:92px; display:none; flex-direction:column; gap:8px; }
+  #sheet .lbl { font-size:13px; opacity:.8; text-align:center; }
+  #sheet button { font:600 15px Tajawal, system-ui, sans-serif; color:#fff; background:rgba(107,71,245,.85); border:0; border-radius:12px; padding:11px; cursor:pointer; text-align:start; }
+  #controls { position:absolute; bottom:24px; left:0; right:0; display:flex; justify-content:center; gap:18px; }
+  #controls span { width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; font-size:22px; }
+  #controls .end { background:#E5484D; }
+  /* Tracking */
+  .steps { position:relative; margin:8px 6px 16px; }
+  .step { display:flex; gap:12px; align-items:flex-start; padding-bottom:18px; position:relative; color:#9a95ad; }
+  .step::before { content:''; position:absolute; right:11px; top:24px; bottom:0; width:2px; background:#ddd8ea; }
+  .step:last-child::before { display:none; }
+  .step i { width:24px; height:24px; border-radius:50%; background:#ddd8ea; flex:none; font-style:normal; font-size:13px; display:flex; align-items:center; justify-content:center; color:#fff; }
+  .step.done { color:#1f1a33; } .step.done i { background:var(--ok); }
+  .step.now i { background:var(--brand); animation:pulse 1.4s infinite; } .step.now { color:#1f1a33; font-weight:700; }
+  .map { height:140px; border-radius:16px; margin-bottom:12px; background:
+         linear-gradient(90deg, transparent 47%, #fff 47%, #fff 53%, transparent 53%), linear-gradient(0deg, transparent 47%, #fff 47%, #fff 53%, transparent 53%),
+         linear-gradient(30deg, transparent 60%, #fff 60%, #fff 64%, transparent 64%), #DDE8D8; background-size:80px 80px, 80px 80px, 160px 160px; position:relative; }
+  .map::after { content:'📍'; position:absolute; left:50%; top:42%; transform:translate(-50%,-50%); font-size:30px; }
+  .check { width:84px; height:84px; border-radius:50%; background:var(--ok); color:#fff; font-size:46px; display:flex; align-items:center; justify-content:center; margin:10px auto 14px; animation:pop .5s cubic-bezier(.2,.9,.3,1.4); }
+  @keyframes pop { from { transform:scale(.3); } to { transform:scale(1); } }
+  /* Start / end cards */
+  .overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(14,12,20,.86); z-index:6; }
+  .card { background:#fff; color:var(--brand-dark); border-radius:20px; padding:26px 30px; max-width:440px; width:calc(100% - 32px); box-sizing:border-box; text-align:center; }
+  .card img { width:220px; max-width:80%; }
+  .card h1 { font-size:21px; margin:12px 0 6px; } .card p { margin:4px 0; color:#555; font-size:15px; }
+  .card button { margin-top:14px; font:800 17px Tajawal, system-ui, sans-serif; background:var(--brand); color:#fff; border:0; border-radius:12px; padding:12px 30px; cursor:pointer; }
+  #status { font-size:13px; color:#888; margin-top:8px; direction:ltr; }
+  #top .vr { background:var(--brand); border-color:transparent; }
+  .card .row2 { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .card .row2 button, .card .row2 a { margin-top:10px; font:800 16px Tajawal, system-ui, sans-serif; color:#fff; background:var(--brand-dark); border:0; border-radius:12px; padding:11px 18px; cursor:pointer; text-decoration:none; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="top">
+  <div class="chip" id="where">من منظورك · أنت محمد</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+    <a class="tb" href="../">🏠 الرئيسية</a>
+    <a class="tb" href="../reception/" data-scene="../reception/">🏥 الاستقبال</a>
+    <a class="tb" href="../accident/" data-scene="../accident/">🚗 موقع الحادث</a>
+    <a class="tb" href="../showroom/" data-scene="../showroom/">🚘 معرض السيارات</a>
+    <button id="lang">English</button>
+    <button id="vrTop" class="vr">ادخل VR 🥽</button>
+  </div>
+</div>
+
+<div id="sub">
+  <div class="who"><img id="subAvatar" alt=""><div><b id="subName"></b><small id="subRole"></small></div><button id="next">التالي</button></div>
+  <div id="subline"></div>
+  <button id="say"></button>
+</div>
+
+<!-- Tawuniya app inside the son's phone -->
+<div id="phoneWrap"><div id="phone"><div id="island"></div><div id="app">
+
+  <div class="screen" id="s-home">
+    <div class="bar"><img src="assets/branding/tawuniya_logo.png" alt=""><span style="font-size:22px">🔔</span></div>
+    <h2>مرحباً محمد 👋</h2>
+    <p class="muted">كيف نقدر نخدمك اليوم؟</p>
+    <div class="hero"><b>صحتك أولاً</b><span>وثيقتك الطبية فعّالة · الفئة الذهبية</span></div>
+    <div class="grid">
+      <div class="tile hot" data-go="s-who"><i>🩺</i>استشارة طبية فورية</div>
+      <div class="tile"><i>💳</i>البطاقة الطبية</div>
+      <div class="tile"><i>✅</i>الموافقات</div>
+      <div class="tile"><i>🏥</i>شبكة المستشفيات</div>
+      <div class="tile"><i>💊</i>طلبات الأدوية</div>
+      <div class="tile"><i>📄</i>المطالبات</div>
+    </div>
+  </div>
+
+  <div class="screen" id="s-who">
+    <div class="bar"><span class="back">→</span><img src="assets/branding/tawuniya_logo.png" alt=""></div>
+    <h2>لمن الاستشارة؟</h2>
+    <p class="muted">اختر المستفيد من وثيقتك</p>
+    <div class="row" data-go="s-connect"><img src="media/home_care/father_avatar.png" alt=""><div><b>أبو محمد</b><span>الوالد · تابع على الوثيقة</span></div></div>
+    <div class="row" style="opacity:.6"><img src="media/home_care/son_avatar.png" alt=""><div><b>محمد</b><span>صاحب الوثيقة</span></div></div>
+  </div>
+
+  <div class="screen" id="s-connect">
+    <div class="rings"><span></span><span></span><span></span><img src="assets/branding/tawuniya_logo.png" alt=""></div>
+    <h2 style="color:#fff">جاري الاتصال بطبيب…</h2>
+    <p style="opacity:.75;font-size:14px">متوسط وقت الانتظار أقل من دقيقة</p>
+  </div>
+
+  <div class="screen" id="s-call">
+    <div id="feed"></div>
+    <div id="pip"></div>
+    <div id="callTop"><b>د. خالد</b><span id="timer">00:00</span> · مكالمة فيديو</div>
+    <div id="cap"></div>
+    <div id="sheet"><div class="lbl">وش يحس فيه الوالد؟</div></div>
+    <div id="controls"><span>🎙️</span><span>📷</span><span class="end">📞</span></div>
+  </div>
+
+  <div class="screen" id="s-rx">
+    <div class="bar"><span></span><img src="assets/branding/tawuniya_logo.png" alt=""></div>
+    <h2>الوصفة الطبية الإلكترونية</h2>
+    <p class="muted">من د. خالد · للمستفيد أبو محمد</p>
+    <div id="rxList"></div>
+    <p style="margin:6px 2px 14px"><span class="tag">✓ مغطاة بتأمينك</span></p>
+    <button class="btn" data-go="s-delivery">اختيار طريقة الاستلام</button>
+  </div>
+
+  <div class="screen" id="s-delivery">
+    <div class="bar"><span class="back">→</span><img src="assets/branding/tawuniya_logo.png" alt=""></div>
+    <h2>كيف تبي تستلم الدواء؟</h2>
+    <p class="muted">اختر الطريقة المناسبة لك</p>
+    <div class="row" data-choice="home"><div class="ic">🚚</div><div><b>توصيل للمنزل</b><span id="etaLine">مجاناً · خلال ٦٠ دقيقة</span></div></div>
+    <div class="row" data-choice="pickup"><div class="ic">🏪</div><div><b>استلام من صيدلية قريبة</b><span>صيدلية معتمدة · ١.٢ كم</span></div></div>
+    <button class="btn" id="toConfirm" disabled>متابعة</button>
+  </div>
+
+  <div class="screen" id="s-address">
+    <div class="bar"><span class="back">→</span><img src="assets/branding/tawuniya_logo.png" alt=""></div>
+    <h2 id="addrTitle">عنوان التوصيل</h2>
+    <p class="muted" id="addrSub">تأكد من العنوان قبل تأكيد الطلب</p>
+    <div class="map"></div>
+    <div class="row sel"><div class="ic" id="addrIc">🏠</div><div><b id="addrName">المنزل</b><span id="addrLine">حي النرجس، الرياض</span></div></div>
+    <button class="btn" data-go="s-done">تأكيد الطلب</button>
+  </div>
+
+  <div class="screen" id="s-done">
+    <div class="check">✓</div>
+    <h2 style="text-align:center">تم تأكيد طلبك</h2>
+    <p class="muted" style="text-align:center" id="doneSub">رقم الطلب #TW-48210</p>
+    <div class="steps" id="track"></div>
+    <button class="btn" id="finishPhone">تم</button>
+  </div>
+
+</div></div></div>
+
+<div class="overlay" id="start"><div class="card">
+  <img src="assets/branding/tawuniya_logo.png" alt="Tawuniya">
+  <h1>أنت محمد · رعاية في البيت</h1>
+  <p>أبوك تعبان وما يقدر يطلع… ساعده من خلال تطبيق التعاونية.</p>
+  <p style="font-size:13px">الحوار بيمشي لوحده · اسحب بالماوس عشان تبص حواليك · في VR وجّه الليزر واضغط Trigger على الجوال</p>
+  <div class="row2"><button id="goVR" disabled style="background:var(--brand)">ادخل VR 🥽</button><button id="go" disabled>ابدأ في المتصفح</button></div>
+  <div id="status">Loading…</div>
+</div></div>
+<div class="overlay" id="endCard" style="display:none"><div class="card">
+  <img src="assets/branding/tawuniya_logo.png" alt="Tawuniya">
+  <h1>التعاونية معك… حتى وإنت في البيت</h1>
+  <p>استشارة طبية عن بُعد · وصفة إلكترونية · توصيل الدواء لين الباب</p>
+  <button id="replay">إعادة المشهد</button>
+  <div class="row2">
+    <a href="../reception/" data-scene="../reception/">🏥 الاستقبال</a>
+    <a href="../accident/" data-scene="../accident/">🚗 موقع الحادث</a>
+    <a href="../showroom/" data-scene="../showroom/">🚘 معرض السيارات</a>
+  </div>
+</div></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { arrival } from '../portal.js';
+
+const S = await (await fetch('assets/data/home_care_script.json')).json();
+await Promise.all([document.fonts.load('700 64px Tajawal'), document.fonts.load('400 64px Tajawal')]).catch(() => {});
+let LANG = 'ar';
+const pick = v => v[LANG] ?? v.ar;
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+// ------------------------------------------------------------------- scene ---
+// Living room in metres: sofa against the back wall (z=-3), father on it, son standing to his right.
+const canvas = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.xr.enabled = true;
+renderer.xr.setReferenceSpaceType('local-floor');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#e9e2d6');
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+scene.environmentIntensity = 0.65;
+scene.add(new THREE.HemisphereLight('#fff6e8', '#9a8a72', 0.5));
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.05, 100);
+const rig = new THREE.Group(); rig.add(camera); scene.add(rig);   // in VR the rig stands where the son stands
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+const texLoader = new THREE.TextureLoader();
+function tex(name, rep, srgb = true) {
+  const t = texLoader.load(`assets/textures/${name}.jpg`);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]);
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const wallMat = new THREE.MeshStandardMaterial({ color: '#efe9df', roughness: 0.92 });
+const accentMat = new THREE.MeshStandardMaterial({ color: '#cdbfa8', roughness: 0.9 });
+function box(w, h, d, mat, x, y, z) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y, z); m.receiveShadow = true; scene.add(m); return m;
+}
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 7), new THREE.MeshStandardMaterial({ map: tex('parquet', [3.2, 2.8]), roughness: 0.4 }));
+floor.rotation.x = -Math.PI / 2; floor.position.set(0, 0, -0.5); floor.receiveShadow = true; scene.add(floor);
+box(8, 3, 0.1, accentMat, 0, 1.5, -3.2);            // back wall (behind the sofa)
+box(0.1, 3, 7, wallMat, -4, 1.5, -0.5);
+box(0.1, 3, 7, wallMat, 4, 1.5, -0.5);
+box(8, 0.1, 7, new THREE.MeshStandardMaterial({ color: '#faf7f2' }), 0, 3.05, -0.5);
+// Window with daylight on the right wall
+const win = box(0.04, 1.5, 1.9, new THREE.MeshBasicMaterial({ color: '#dff0ff' }), 3.94, 1.6, -1.2);
+box(0.08, 1.6, 0.06, new THREE.MeshStandardMaterial({ color: '#fff' }), 3.92, 1.6, -0.22); box(0.08, 1.6, 0.06, new THREE.MeshStandardMaterial({ color: '#fff' }), 3.92, 1.6, -2.18);
+// Framed calligraphy-style art and a wall lamp glow
+const art = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.8), new THREE.MeshStandardMaterial({ color: '#2f3b45', roughness: 0.6 }));
+art.position.set(0.3, 2.05, -3.14); scene.add(art);
+const artInner = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.6), new THREE.MeshStandardMaterial({ color: '#c9a86a', roughness: 0.5, metalness: 0.4 }));
+artInner.position.set(0.3, 2.05, -3.13); scene.add(artInner);
+
+const sun = new THREE.DirectionalLight('#fff1dc', 1.8);
+sun.position.set(6, 5, -1); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -6, right: 6, top: 6, bottom: -6, near: 0.5, far: 20 }); sun.shadow.bias = -0.0004; sun.shadow.radius = 5;
+scene.add(sun);
+const lamp = new THREE.PointLight('#ffd9a8', 4, 6, 2); lamp.position.set(-2.4, 2.2, -2.2); scene.add(lamp);
+
+const gltf = new GLTFLoader();
+function fit(root, { len, height }) {
+  const g = new THREE.Group(); g.add(root); g.updateMatrixWorld(true);
+  let b = new THREE.Box3().setFromObject(g); const s = b.getSize(new THREE.Vector3());
+  g.scale.setScalar(height ? height / s.y : len / Math.max(s.x, s.z)); g.updateMatrixWorld(true);
+  b = new THREE.Box3().setFromObject(g); const c = b.getCenter(new THREE.Vector3());
+  root.position.sub(new THREE.Vector3(c.x / g.scale.x, b.min.y / g.scale.x, c.z / g.scale.x));
+  return g;
+}
+// face: degrees around Y the model's front looks (0 = +z, towards the camera). furniture = generated
+// furniture (faces -z), people = Meshy characters (face +z).
+async function place(path, x, z, face, size, kind = 'furniture') {
+  const res = await gltf.loadAsync(path);
+  res.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
+  const holder = new THREE.Group();
+  holder.position.set(x, 0, z);
+  holder.rotation.y = (face + (kind === 'furniture' ? 180 : 0)) * Math.PI / 180;
+  holder.add(fit(res.scene, size));
+  scene.add(holder);
+  return holder;
+}
+const W = n => `assets/models/${n}.glb`;
+const people = {};
+const statusEl = document.getElementById('status');
+await Promise.all([
+  place(W('sofa'), 0.2, -2.55, 180, { len: 2.6 }),   // this sofa model faces +z, unlike the other furniture
+  place(W('coffee_table'), 0.3, -1.05, 0, { len: 1.0 }),
+  place(W('tv_unit'), -3.6, -0.6, -90, { len: 2.0 }),   // on the left wall, out of the camera's way
+  place(W('plant'), -3.5, -2.75, 0, { height: 1.6 }),
+  place(W('plant'), 3.45, -2.8, 0, { height: 1.4 }),
+  place('assets/models/father.glb', 0.55, -2.47, -45, { height: 1.32 }, 'person').then(g => { people.father = g; g.position.y = -0.035; }),   // sunk slightly into the cushion
+]).catch(e => console.warn('model failed', e));
+const rug = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.2), new THREE.MeshStandardMaterial({ color: '#8a6f5a', roughness: 1 }));
+rug.rotation.x = -Math.PI / 2; rug.position.set(0.3, 0.005, -1.2); rug.receiveShadow = true; scene.add(rug);
+
+// ------------------------------------------------------------------ camera ---
+// First person: you stand where the son stood, at eye height, looking at your father.
+// Drag to look around; the view drifts back to whoever is speaking.
+const EYE = new THREE.Vector3(-1.5, 1.66, -0.6);
+const LOOK = { father: new THREE.Vector3(0.5, 0.95, -2.45), room: new THREE.Vector3(0.3, 1.2, -2.6), phone: new THREE.Vector3(-1.2, 0.7, -1.2) };
+let focus = 'room', yawOff = 0, pitchOff = 0, dragging = false, lx = 0, ly = 0, lastDrag = 0;
+canvas.addEventListener('pointerdown', e => { dragging = true; lx = e.clientX; ly = e.clientY; });
+addEventListener('pointerup', () => { dragging = false; lastDrag = performance.now(); });
+addEventListener('pointermove', e => {
+  if (!dragging) return;
+  yawOff = Math.max(-1.6, Math.min(1.6, yawOff - (e.clientX - lx) * 0.004));
+  pitchOff = Math.max(-0.8, Math.min(0.6, pitchOff - (e.clientY - ly) * 0.004));
+  lx = e.clientX; ly = e.clientY;
+});
+camera.position.copy(EYE);
+const camLook = LOOK.room.clone();
+camera.lookAt(camLook);
+let shot = 'room';   // kept so the shared story code can set it
+
+// ---------------------------------------------------------------- audio / UI ---
+let audioCtx = null, analyser = null, audio = null, speaking = null;
+const freq = new Uint8Array(32);
+function playLine(dir, id) {
+  return new Promise(resolve => {
+    if (audio) audio.pause();
+    audio = new Audio(`media/home_care/${id}.mp3`);
+    try {
+      audioCtx = audioCtx || new AudioContext();
+      const src = audioCtx.createMediaElementSource(audio);
+      analyser = audioCtx.createAnalyser(); analyser.fftSize = 64; src.connect(analyser); analyser.connect(audioCtx.destination);
+    } catch (e) { analyser = null; }
+    audio.onended = () => { analyser = null; resolve(); };
+    audio.play().catch(() => setTimeout(resolve, 2500));
+  });
+}
+const subEl = document.getElementById('sub'), sublineEl = document.getElementById('subline');
+let skip = null;
+document.getElementById('next').onclick = () => { if (skip) skip(); };
+async function speakScene(line) {
+  const P = S.people[line.who];
+  const sayBtn = document.getElementById('say');
+  if (line.who === 'son') {
+    // Your turn: the line waits for you to press it
+    document.getElementById('subAvatar').src = 'media/home_care/son_avatar.png';
+    document.getElementById('subName').textContent = LANG === 'ar' ? 'أنت' : 'You';
+    document.getElementById('subRole').textContent = LANG === 'ar' ? 'دورك تتكلم' : 'Your turn';
+    subEl.style.display = 'block';
+    sublineEl.textContent = '';
+    focus = 'father';   // auto version: your line plays straight away
+    document.getElementById('subName').textContent = LANG === 'ar' ? 'أنت (محمد)' : 'You (Mohammed)';
+    document.getElementById('subRole').textContent = pick(P.role);
+  }
+  if (line.who !== 'son') {
+    document.getElementById('subAvatar').src = `media/home_care/${line.who}_avatar.png`;
+    document.getElementById('subName').textContent = pick(P.name);
+    document.getElementById('subRole').textContent = pick(P.role);
+  }
+  subEl.style.display = 'block';
+  focus = 'father';
+  speaking = line.who;
+  const text = pick(line); let i = 0;
+  sublineEl.textContent = '';
+  const typer = setInterval(() => { sublineEl.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(typer); }, 30);
+  await Promise.race([playLine('home_care', line.id), new Promise(r => { skip = r; })]);
+  if (audio) audio.pause();
+  clearInterval(typer); sublineEl.textContent = text; speaking = null; skip = null;
+  document.getElementById('say').style.display = 'none';
+  await wait(450);
+}
+
+// ---------------------------------------------------------------- phone app ---
+const phoneWrap = document.getElementById('phoneWrap');
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); }
+function tapTo(selector) {
+  return new Promise(r => document.querySelectorAll(selector).forEach(el => el.addEventListener('click', () => r(el), { once: true })));
+}
+let order = { method: 'home', rx: [] };
+async function runPhone() {
+  document.getElementById('where').textContent = 'جوالك · تطبيق التعاونية';
+  canvas.classList.add('blur');
+  phoneWrap.style.display = 'flex';
+  requestAnimationFrame(() => phoneWrap.classList.add('on'));
+  showScreen('s-home');
+  await tapTo('#s-home [data-go="s-who"]');
+  showScreen('s-who');
+  await tapTo('#s-who [data-go="s-connect"]');
+  showScreen('s-connect');
+  await wait(2600);
+  await runCall();
+  // Prescription
+  const list = document.getElementById('rxList'); list.innerHTML = '';
+  for (const item of order.rx) list.insertAdjacentHTML('beforeend', `<div class="row"><div class="ic">💊</div><div><b>${pick(item)}</b><span>${LANG === 'ar' ? 'حسب إرشادات الطبيب' : 'As directed by the doctor'}</span></div></div>`);
+  showScreen('s-rx');
+  await tapTo('#s-rx [data-go="s-delivery"]');
+  // Delivery choice
+  showScreen('s-delivery');
+  const rows = document.querySelectorAll('#s-delivery .row'), next = document.getElementById('toConfirm');
+  rows.forEach(r => r.classList.remove('sel')); next.disabled = true;
+  rows.forEach(r => r.onclick = () => { rows.forEach(x => x.classList.toggle('sel', x === r)); order.method = r.dataset.choice; next.disabled = false; });
+  await tapTo('#toConfirm');
+  const home = order.method === 'home';
+  document.getElementById('addrTitle').textContent = home ? 'عنوان التوصيل' : 'الصيدلية المختارة';
+  document.getElementById('addrSub').textContent = home ? 'الدواء بيوصلك لين الباب' : 'جاهز للاستلام خلال ٣٠ دقيقة';
+  document.getElementById('addrIc').textContent = home ? '🏠' : '🏪';
+  document.getElementById('addrName').textContent = home ? 'المنزل' : 'صيدلية معتمدة';
+  document.getElementById('addrLine').textContent = home ? pick(S.delivery.address).replace(/^.*?·\s*/, '') : 'طريق أنس بن مالك · ١.٢ كم';
+  showScreen('s-address');
+  await tapTo('#s-address [data-go="s-done"]');
+  // Confirmation + live tracking
+  showScreen('s-done');
+  document.getElementById('doneSub').textContent = `رقم الطلب #TW-48210 · ${home ? 'توصيل ' + pick(S.delivery.eta) : 'استلام من الصيدلية'}`;
+  const steps = home ? ['تم استلام الطلب', 'الصيدلية تجهّز الدواء', 'المندوب في الطريق', 'تم التسليم'] : ['تم استلام الطلب', 'الصيدلية تجهّز الدواء', 'جاهز للاستلام'];
+  const track = document.getElementById('track');
+  track.innerHTML = steps.map((s, i) => `<div class="step" data-i="${i}"><i>${i + 1}</i><div>${s}</div></div>`).join('');
+  (async () => {
+    for (let i = 0; i < steps.length - 1; i++) {
+      track.querySelectorAll('.step').forEach((el, k) => { el.className = 'step' + (k < i ? ' done' : k === i ? ' now' : ''); });
+      await wait(1500);
+    }
+    track.querySelectorAll('.step').forEach((el, k) => { el.className = 'step' + (k < steps.length - 2 ? ' done' : k === steps.length - 2 ? ' now' : ''); });
+  })();
+  await tapTo('#finishPhone');
+  phoneWrap.classList.remove('on');
+  await wait(500);
+  phoneWrap.style.display = 'none';
+  canvas.classList.remove('blur');
+  document.getElementById('where').textContent = 'من منظورك · أنت محمد';
+}
+async function runCall() {
+  showScreen('s-call');
+  const capEl = document.getElementById('cap'), sheet = document.getElementById('sheet'), feed = document.getElementById('feed');
+  const t0 = Date.now();
+  const timer = setInterval(() => { const s = Math.floor((Date.now() - t0) / 1000); document.getElementById('timer').textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }, 500);
+  const doctorSays = async line => {
+    capEl.style.display = 'block'; capEl.textContent = pick(line);
+    feed.classList.add('talk');
+    await playLine('home_care', line.id);
+    feed.classList.remove('talk');
+    await wait(350);
+  };
+  await doctorSays(S.call.greeting);
+  // Symptom choice
+  sheet.querySelectorAll('button').forEach(b => b.remove());
+  for (const o of S.call.symptoms) {
+    const b = document.createElement('button'); b.textContent = pick(o.q); b.dataset.id = o.id; sheet.appendChild(b);
+  }
+  capEl.style.display = 'none'; sheet.style.display = 'flex';
+  const chosenBtn = await tapTo('#sheet button');
+  sheet.style.display = 'none';
+  const chosen = S.call.symptoms.find(o => o.id === chosenBtn.dataset.id);
+  order.rx = chosen.rx;
+  await doctorSays({ id: chosen.id, ...chosen.a });
+  await doctorSays(S.call.closing);
+  clearInterval(timer);
+}
+
+// ------------------------------------------------------------------ story ---
+async function story() {
+  document.getElementById('endCard').style.display = 'none';
+  focus = 'room'; yawOff = pitchOff = 0; await wait(1800);
+  for (const line of S.living_room) await speakScene(line);
+  subEl.style.display = 'none';
+  focus = 'phone'; yawOff = pitchOff = 0; await wait(1200);
+  await runPhone();
+  focus = 'father'; await wait(900);
+  for (const line of S.ending) await speakScene(line);
+  subEl.style.display = 'none';
+  focus = 'room'; await wait(800);
+  document.getElementById('endCard').style.display = 'flex';
+}
+document.getElementById('replay').onclick = () => story();
+const langBtn = document.getElementById('lang');
+function setLang(l) { LANG = l; langBtn.textContent = l === 'ar' ? 'English' : 'عربي'; }
+langBtn.onclick = () => setLang(LANG === 'ar' ? 'en' : 'ar');
+
+statusEl.textContent = '';
+
+// --------------------------------------------------------------- VR panels ---
+// Inside the headset the HTML is invisible, so the subtitles, the phone app and the end card are drawn on canvas panels.
+// The phone panel mirrors whatever HTML screen is showing; laser + trigger clicks the real HTML element,
+// so the story code above runs unchanged in both modes.
+const imgCache = {};
+const img = src => { if (src && !imgCache[src]) { const i = new Image(); i.src = src; imgCache[src] = i; } return imgCache[src]; };
+const drawImg = (g, src, x, y, w, h) => { const i = img(src); if (i && i.complete && i.naturalWidth) g.drawImage(i, x, y, w, h); };
+function makePanel(W, H, PW) {
+  const cnv = document.createElement('canvas'); cnv.width = W; cnv.height = H;
+  const tex = new THREE.CanvasTexture(cnv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(PW, PW * H / W),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true, toneMapped: false, depthTest: false }));
+  mesh.visible = false; mesh.renderOrder = 10; scene.add(mesh);
+  return { W, H, g: cnv.getContext('2d'), tex, mesh, rects: [], hover: null, last: 0 };
+}
+const rr = (g, x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r); };
+function wrap(g, text, maxW) {
+  const words = String(text).split(/\s+/).filter(Boolean), lines = []; let cur = '';
+  for (const w of words) { const t = cur ? cur + ' ' + w : w; if (g.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }
+  if (cur) lines.push(cur);
+  return lines;
+}
+const shown = el => el && getComputedStyle(el).display !== 'none';
+
+const subP = makePanel(1200, 400, 1.0), phoneP = makePanel(740, 1480, 0.34), endP = makePanel(1100, 800, 0.95);
+
+function drawSub(p) {
+  const { g, W, H } = p, P = 36;
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = 'rgba(22,18,34,0.94)'; rr(g, 0, 0, W, H, 40); g.fill();
+  g.strokeStyle = 'rgba(107,71,245,0.8)'; g.lineWidth = 4; rr(g, 2, 2, W - 4, H - 4, 38); g.stroke();
+  g.direction = LANG === 'ar' ? 'rtl' : 'ltr'; g.textAlign = LANG === 'ar' ? 'right' : 'left';
+  const rtl = LANG === 'ar', AS = 96, ax = rtl ? W - P - AS : P, tx = rtl ? W - P - AS - 24 : P + AS + 24, X = rtl ? W - P : P;
+  g.save(); g.beginPath(); g.arc(ax + AS / 2, P + AS / 2, AS / 2, 0, Math.PI * 2); g.fillStyle = '#fff'; g.fill(); g.clip();
+  drawImg(g, document.getElementById('subAvatar').getAttribute('src'), ax, P, AS, AS); g.restore();
+  g.fillStyle = '#fff'; g.font = '800 44px Tajawal'; g.fillText(document.getElementById('subName').textContent, tx, P + 46);
+  g.fillStyle = 'rgba(255,255,255,0.7)'; g.font = '500 30px Tajawal'; g.fillText(document.getElementById('subRole').textContent, tx, P + 88);
+  g.fillStyle = '#fff'; g.font = '500 42px Tajawal';
+  wrap(g, sublineEl.textContent, W - 2 * P).slice(0, 4).forEach((l, i) => g.fillText(l, X, P + AS + 60 + i * 58));
+  p.tex.needsUpdate = true;
+}
+
+// One phone screen, read from the HTML: headings, cards, rows, buttons. Clickable things remember their element.
+function drawPhone(p, t) {
+  const { g, W, H } = p, P = 34, X = W - P, CW = W - 2 * P;
+  const scr = document.querySelector('.screen.on');
+  p.rects = [];
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = '#111'; rr(g, 0, 0, W, H, 90); g.fill();
+  g.save(); rr(g, 18, 18, W - 36, H - 36, 74); g.clip();
+  g.fillStyle = '#F5F4FA'; g.fillRect(0, 0, W, H);
+  g.direction = 'rtl'; g.textAlign = 'right'; g.textBaseline = 'alphabetic';
+  const click = (el, x, y, w, h) => p.rects.push({ el, x, y, w, h });
+  const hov = el => p.hover && p.hover === el;
+  const text = (s, x, y, font, color, align = 'right') => { g.font = font; g.fillStyle = color; g.textAlign = align; g.fillText(s, x, y); g.textAlign = 'right'; };
+  function row(el, y, canClick) {
+    const h = 120, sel = el.classList.contains('sel') || hov(el);
+    g.fillStyle = '#fff'; rr(g, P, y, CW, h, 28); g.fill();
+    if (sel) { g.strokeStyle = '#6B47F5'; g.lineWidth = 5; rr(g, P, y, CW, h, 28); g.stroke(); }
+    if (el.style.opacity) { g.globalAlpha = +el.style.opacity; }
+    const im = el.querySelector('img'), ic = el.querySelector('.ic'), S = 84, ix = X - 20 - S;
+    if (im) { g.save(); g.beginPath(); g.arc(ix + S / 2, y + h / 2, S / 2, 0, Math.PI * 2); g.clip(); drawImg(g, im.getAttribute('src'), ix, y + h / 2 - S / 2, S, S); g.restore(); }
+    else if (ic) { g.fillStyle = '#EFEAFE'; rr(g, ix, y + h / 2 - S / 2, S, S, 22); g.fill(); text(ic.textContent, ix + S / 2, y + h / 2 + 16, '44px sans-serif', '#000', 'center'); }
+    const b = el.querySelector('b'), sp = el.querySelector('span');
+    if (b) text(b.textContent, ix - 22, y + 52, '800 32px Tajawal', '#1f1a33');
+    if (sp) text(sp.textContent, ix - 22, y + 92, '500 25px Tajawal', '#6d6880');
+    g.globalAlpha = 1;
+    if (canClick) click(el, P, y, CW, h);
+    return y + h + 18;
+  }
+  if (scr && scr.id === 's-call') {
+    drawImg(g, 'media/home_care/doctor_call.jpg', -60, 0, W + 120, H);
+    g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(0, 0, W, H);
+    drawImg(g, 'media/home_care/father_pip.jpg', 34, 120, 180, 240);
+    g.strokeStyle = '#fff'; g.lineWidth = 4; rr(g, 34, 120, 180, 240, 24); g.stroke();
+    g.fillStyle = 'rgba(0,0,0,0.45)'; rr(g, W - 290, 116, 256, 96, 22); g.fill();
+    text('د. خالد', W - 54, 158, '800 32px Tajawal', '#fff'); text(document.getElementById('timer').textContent + ' · مكالمة فيديو', W - 54, 196, '500 24px Tajawal', '#fff');
+    const cap = document.getElementById('cap'), sheet = document.getElementById('sheet');
+    if (shown(sheet)) {
+      const btns = [...sheet.querySelectorAll('button')]; let y = H - 200 - btns.length * 112;
+      text(sheet.querySelector('.lbl').textContent, W / 2, y - 20, '600 28px Tajawal', '#fff', 'center');
+      for (const b of btns) {
+        g.fillStyle = hov(b) ? '#8a6bff' : 'rgba(107,71,245,0.9)'; rr(g, P, y, CW, 96, 24); g.fill();
+        if (hov(b)) { g.strokeStyle = '#fff'; g.lineWidth = 4; g.stroke(); }
+        text(b.textContent, X - 24, y + 60, '700 30px Tajawal', '#fff'); click(b, P, y, CW, 96); y += 112;
+      }
+    } else if (shown(cap) && cap.textContent) {
+      g.font = '500 30px Tajawal'; const ls = wrap(g, cap.textContent, CW - 40), h = 40 + ls.length * 44, y = H - 200 - h;
+      g.fillStyle = 'rgba(0,0,0,0.6)'; rr(g, P, y, CW, h, 26); g.fill();
+      ls.forEach((l, i) => text(l, X - 20, y + 50 + i * 44, '500 30px Tajawal', '#fff'));
+    }
+    [['🎙️', W / 2 + 130], ['📷', W / 2], ['📞', W / 2 - 130]].forEach(([e, x], i) => {
+      g.fillStyle = i === 2 ? '#E5484D' : 'rgba(255,255,255,0.18)'; g.beginPath(); g.arc(x, H - 110, 50, 0, Math.PI * 2); g.fill();
+      text(e, x, H - 94, '44px sans-serif', '#fff', 'center');
+    });
+  } else if (scr && scr.id === 's-connect') {
+    const gr = g.createLinearGradient(0, 0, W, H); gr.addColorStop(0, '#34295E'); gr.addColorStop(1, '#1b1530'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    for (let k = 0; k < 3; k++) { const ph = ((t * 0.5 + k / 3) % 1); g.strokeStyle = `rgba(255,255,255,${1 - ph})`; g.lineWidth = 4; g.beginPath(); g.arc(W / 2, H / 2 - 120, 60 + ph * 140, 0, Math.PI * 2); g.stroke(); }
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(W / 2, H / 2 - 120, 80, 0, Math.PI * 2); g.fill();
+    drawImg(g, 'assets/branding/tawuniya_logo.png', W / 2 - 66, H / 2 - 142, 132, 44);
+    text(scr.querySelector('h2').textContent, W / 2, H / 2 + 110, '800 40px Tajawal', '#fff', 'center');
+    text(scr.querySelector('p').textContent, W / 2, H / 2 + 160, '500 26px Tajawal', 'rgba(255,255,255,0.75)', 'center');
+  } else if (scr) {
+    let y = 110;
+    for (const el of scr.children) {
+      if (!shown(el)) continue;
+      const c = el.classList;
+      if (c.contains('bar')) { drawImg(g, 'assets/branding/tawuniya_logo.png', P, y, 180, 60); y += 96; }
+      else if (el.tagName === 'H2') { g.font = '800 42px Tajawal'; for (const l of wrap(g, el.textContent, CW)) { y += 50; text(l, el.style.textAlign === 'center' ? W / 2 : X, y, '800 42px Tajawal', '#34295E', el.style.textAlign === 'center' ? 'center' : 'right'); } y += 20; }
+      else if (el.tagName === 'P' && el.querySelector('.tag')) { g.fillStyle = '#E3F6EC'; rr(g, X - 260, y, 260, 52, 16); g.fill(); text(el.textContent.trim(), X - 18, y + 36, '700 26px Tajawal', '#2FA36B'); y += 76; }
+      else if (el.tagName === 'P') { g.font = '500 28px Tajawal'; for (const l of wrap(g, el.textContent, CW)) { y += 38; text(l, el.style.textAlign === 'center' ? W / 2 : X, y, '500 28px Tajawal', '#6d6880', el.style.textAlign === 'center' ? 'center' : 'right'); } y += 26; }
+      else if (c.contains('hero')) {
+        const gr = g.createLinearGradient(0, y, W, y + 130); gr.addColorStop(0, '#34295E'); gr.addColorStop(1, '#6B47F5');
+        g.fillStyle = gr; rr(g, P, y, CW, 130, 34); g.fill();
+        text(el.querySelector('b').textContent, X - 28, y + 56, '800 34px Tajawal', '#fff'); text(el.querySelector('span').textContent, X - 28, y + 98, '500 25px Tajawal', 'rgba(255,255,255,0.85)');
+        y += 156;
+      } else if (c.contains('grid')) {
+        const tw = (CW - 18) / 2, th = 150;
+        [...el.children].forEach((tile, i) => {
+          const x = X - tw - (i % 2) * (tw + 18), ty = y + Math.floor(i / 2) * (th + 18), hot = tile.classList.contains('hot');
+          g.fillStyle = hov(tile) ? '#EFEAFE' : '#fff'; rr(g, x, ty, tw, th, 28); g.fill();
+          if (hot) { g.strokeStyle = '#6B47F5'; g.lineWidth = 5 + Math.sin(t * 5) * 2; rr(g, x, ty, tw, th, 28); g.stroke(); }
+          text(tile.querySelector('i').textContent, x + tw - 26, ty + 62, '42px sans-serif', '#000');
+          text(tile.textContent.replace(tile.querySelector('i').textContent, '').trim(), x + tw - 26, ty + 118, '700 26px Tajawal', '#1f1a33');
+          if (tile.dataset.go) click(tile, x, ty, tw, th);
+        });
+        y += Math.ceil(el.children.length / 2) * (th + 18);
+      } else if (c.contains('row')) y = row(el, y, !!(el.dataset.go || el.dataset.choice));
+      else if (el.id === 'rxList') { for (const r of el.children) y = row(r, y, false); }
+      else if (c.contains('btn')) {
+        const yb = Math.max(y + 10, H - 170), dis = el.disabled;
+        g.globalAlpha = dis ? 0.4 : 1; g.fillStyle = hov(el) ? '#8a6bff' : '#6B47F5'; rr(g, P, yb, CW, 100, 28); g.fill(); g.globalAlpha = 1;
+        text(el.textContent, W / 2, yb + 64, '800 34px Tajawal', '#fff', 'center');
+        if (!dis) click(el, P, yb, CW, 100);
+        y = yb + 120;
+      } else if (c.contains('map')) { g.fillStyle = '#DDE8D8'; rr(g, P, y, CW, 240, 30); g.fill(); text('📍', W / 2, y + 140, '64px sans-serif', '#000', 'center'); y += 262; }
+      else if (c.contains('check')) { g.fillStyle = '#2FA36B'; g.beginPath(); g.arc(W / 2, y + 80, 80, 0, Math.PI * 2); g.fill(); text('✓', W / 2, y + 112, '800 90px sans-serif', '#fff', 'center'); y += 190; }
+      else if (c.contains('steps')) {
+        for (const st of el.querySelectorAll('.step')) {
+          const done = st.classList.contains('done'), now = st.classList.contains('now');
+          g.fillStyle = done ? '#2FA36B' : now ? '#6B47F5' : '#ddd8ea'; g.beginPath(); g.arc(X - 22, y + 22, 22, 0, Math.PI * 2); g.fill();
+          text(st.textContent.replace(/^\d+/, '').trim(), X - 64, y + 32, (now ? '800' : '500') + ' 28px Tajawal', done || now ? '#1f1a33' : '#9a95ad');
+          y += 70;
+        }
+      }
+    }
+  }
+  g.restore();
+  g.fillStyle = '#000'; rr(g, W / 2 - 110, 40, 220, 56, 28); g.fill();   // island
+  p.tex.needsUpdate = true;
+}
+
+function drawEnd(p) {
+  const { g, W, H } = p, card = document.querySelector('#endCard .card');
+  p.rects = [];
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = '#fff'; rr(g, 0, 0, W, H, 48); g.fill();
+  g.direction = 'rtl'; g.textAlign = 'center';
+  drawImg(g, 'assets/branding/tawuniya_logo.png', W / 2 - 170, 50, 340, 101);
+  g.fillStyle = '#34295E'; g.font = '800 46px Tajawal'; g.fillText(card.querySelector('h1').textContent, W / 2, 230);
+  g.fillStyle = '#555'; g.font = '500 30px Tajawal'; g.fillText(card.querySelector('p').textContent, W / 2, 285);
+  const btn = (el, label, x, y, w, color) => {
+    g.fillStyle = p.hover === el ? '#8a6bff' : color; rr(g, x, y, w, 100, 26); g.fill();
+    g.fillStyle = '#fff'; g.font = '800 32px Tajawal'; g.fillText(label, x + w / 2, y + 64); p.rects.push({ el, x, y, w, h: 100 });
+  };
+  btn(document.getElementById('replay'), LANG === 'ar' ? 'إعادة المشهد' : 'Replay', W / 2 - 220, 340, 440, '#6B47F5');
+  const links = [...card.querySelectorAll('[data-scene]')], bw = (W - 80 - 2 * 24) / 3;
+  links.forEach((a, i) => btn(a, a.textContent.replace(/^\S+\s/, ''), W - 40 - bw - i * (bw + 24), 490, bw, '#34295E'));
+  g.fillStyle = '#888'; g.font = '500 26px Tajawal'; g.fillText(LANG === 'ar' ? 'وجّه الليزر واضغط Trigger' : 'Point the laser and pull the trigger', W / 2, 680);
+  p.tex.needsUpdate = true;
+}
+
+const eyeV = new THREE.Vector3(), fwd = new THREE.Vector3();
+function placeAhead(mesh, dist, drop, side = 0) {
+  camera.getWorldPosition(eyeV); camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize();
+  const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
+  mesh.position.copy(eyeV).addScaledVector(fwd, dist).addScaledVector(right, side); mesh.position.y = eyeV.y - drop;
+  mesh.lookAt(eyeV.x, mesh.position.y + drop * 0.5, eyeV.z);
+}
+function vrUpdate(t) {
+  const inXR = renderer.xr.isPresenting;
+  const want = { sub: inXR && shown(subEl), phone: inXR && shown(phoneWrap), end: inXR && shown(document.getElementById('endCard')) };
+  if (want.sub && !subP.mesh.visible) placeAhead(subP.mesh, 1.5, 0.55);
+  if (want.phone && !phoneP.mesh.visible) placeAhead(phoneP.mesh, 0.5, 0.22);
+  if (want.end && !endP.mesh.visible) placeAhead(endP.mesh, 1.3, 0.25);
+  subP.mesh.visible = want.sub; phoneP.mesh.visible = want.phone; endP.mesh.visible = want.end;
+  if (want.sub && t - subP.last > 0.08) { subP.last = t; drawSub(subP); }
+  if (want.phone && t - phoneP.last > 0.1) { phoneP.last = t; drawPhone(phoneP, t); }
+  if (want.end && t - endP.last > 0.15) { endP.last = t; drawEnd(endP); }
+}
+
+// Controllers: a laser from each hand, trigger clicks whatever HTML element the panel spot stands for
+const ray = new THREE.Raycaster(), rayMat = new THREE.Matrix4();
+const lasers = [0, 1].map(i => {
+  const ctl = renderer.xr.getController(i);
+  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0, -1)]),
+    new THREE.LineBasicMaterial({ color: '#b9a8ff' }));
+  line.scale.z = 3; ctl.add(line);
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(0.008, 12, 8), new THREE.MeshBasicMaterial({ color: '#ffffff' }));
+  dot.visible = false; scene.add(dot);
+  ctl.userData = { line, dot, target: null };
+  ctl.addEventListener('selectstart', () => { const tg = ctl.userData.target; if (tg) { tg.click(); phoneP.last = endP.last = 0; } });
+  rig.add(ctl);
+  return ctl;
+});
+function updateLasers() {
+  const panels = [phoneP, endP].filter(p => p.mesh.visible);
+  for (const p of [phoneP, endP]) p.hover = null;
+  for (const ctl of lasers) {
+    const u = ctl.userData;
+    rayMat.identity().extractRotation(ctl.matrixWorld);
+    ray.ray.origin.setFromMatrixPosition(ctl.matrixWorld);
+    ray.ray.direction.set(0, 0, -1).applyMatrix4(rayMat);
+    const hit = panels.length ? ray.intersectObjects(panels.map(p => p.mesh), false)[0] : null;
+    u.target = null;
+    if (hit) {
+      const p = panels.find(q => q.mesh === hit.object), px = hit.uv.x * p.W, py = (1 - hit.uv.y) * p.H;
+      const r = p.rects.find(r => px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h);
+      if (r) { u.target = r.el; p.hover = r.el; }
+    }
+    u.line.scale.z = hit ? hit.distance : 3; u.line.visible = panels.length > 0;
+    u.dot.visible = !!hit; if (hit) u.dot.position.copy(hit.point);
+  }
+}
+
+// ---------------------------------------------------------------- enter VR ---
+// You stand where the son stands, facing your father; the headset does the looking around.
+let xrSession = null;
+async function enterVR() {
+  if (!window.isSecureContext) { alert(LANG === 'ar' ? 'الـ VR يشتغل بس على https. افتح الرابط وهو يبدأ بـ https://' : 'VR only works over https. Open the link starting with https://'); return; }
+  if (!navigator.xr || !(await navigator.xr.isSessionSupported('immersive-vr').catch(() => false))) {
+    alert(LANG === 'ar' ? 'افتح الصفحة من متصفح الميتا كويست عشان تدخل VR' : 'Open this page in the Meta Quest browser to enter VR'); return;
+  }
+  if (audioCtx) audioCtx.resume();
+  xrSession = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking'] });
+  rig.position.set(EYE.x, 0, EYE.z);
+  rig.rotation.y = Math.atan2(-(LOOK.father.x - EYE.x), -(LOOK.father.z - EYE.z));
+  camera.position.set(0, 0, 0); camera.rotation.set(0, 0, 0);
+  xrSession.addEventListener('end', () => { xrSession = null; rig.position.set(0, 0, 0); rig.rotation.set(0, 0, 0); });
+  await renderer.xr.setSession(xrSession);
+}
+
+window.__home = { people, story, showScreen, setFocus: f => { focus = f; }, panels: { subP, phoneP, endP, drawSub, drawPhone, drawEnd } };   // test hook
+
+// ------------------------------------------------------------------ start ---
+const goBtn = document.getElementById('go'), goVRBtn = document.getElementById('goVR');
+let started = false;
+function begin() {
+  document.getElementById('start').style.display = 'none';
+  audioCtx = audioCtx || new AudioContext(); audioCtx.resume();
+  if (!started) { started = true; story(); }
+}
+goBtn.disabled = goVRBtn.disabled = false;
+goBtn.onclick = begin;
+goVRBtn.onclick = () => { begin(); enterVR(); };
+document.getElementById('vrTop').onclick = () => { begin(); enterVR(); };
+// Links to the other scenes keep the language and, from VR, ask the next page to re-enter VR
+for (const a of document.querySelectorAll('[data-scene]')) a.onclick = e => {
+  e.preventDefault();
+  const q = new URLSearchParams({ lang: LANG }); if (renderer.xr.isPresenting) q.set('vr', '1');
+  location.href = `${a.dataset.scene}?${q}`;
+};
+if (arrival({ setLang, enterVR: () => { begin(); enterVR(); } })) goVRBtn.focus();
+
+// ------------------------------------------------------------------- loop ---
+const clock = new THREE.Clock(), tp = new THREE.Vector3(), tl = new THREE.Vector3();
+window.__dbg = { camera, scene, THREE, renderer, freeze: false };   // debug: freeze the camera to inspect the set
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+  if (window.__dbg.freeze) { renderer.render(scene, camera); return; }
+  const inXR = renderer.xr.isPresenting;
+  // First-person view: ease towards the focus point, apply your drag offset, breathe a little
+  if (!inXR) {
+    if (!dragging && performance.now() - lastDrag > 2500) { yawOff *= 1 - Math.min(1, dt * 0.8); pitchOff *= 1 - Math.min(1, dt * 0.8); }
+    camLook.lerp(LOOK[focus], Math.min(1, dt * 2.2));
+    camera.position.set(EYE.x + Math.sin(t * 0.5) * 0.01, EYE.y + Math.sin(t * 1.1) * 0.008, EYE.z);
+    camera.lookAt(camLook);
+    camera.rotateY(yawOff); camera.rotateX(pitchOff);
+  }
+  // People breathe; whoever is talking nods with their voice
+  const level = analyser ? (analyser.getByteFrequencyData(freq), freq.slice(2, 12).reduce((a, v) => a + v, 0) / (10 * 255)) : 0;
+  for (const [k, g] of Object.entries(people)) {
+    const body = g.children[0];
+    body.scale.y = body.scale.x * (1 + Math.sin(t * (k === 'father' ? 1.2 : 1.6)) * 0.005);
+    body.rotation.x = (speaking === k ? -level * 0.07 : 0) + Math.sin(t * 0.6 + (k === 'father' ? 1 : 0)) * 0.005;
+    body.rotation.z = Math.sin(t * 0.4 + (k === 'father' ? 2 : 0)) * (k === 'father' ? 0.01 : 0.008);
+  }
+  vrUpdate(t);
+  if (inXR) updateLasers();
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>

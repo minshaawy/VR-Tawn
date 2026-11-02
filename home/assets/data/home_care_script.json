@@ -1,0 +1,170 @@
+{
+  "_note": "PLACEHOLDER WORDING - medical and service wording must be reviewed by Tawuniya before any public use. Audio: Web/media/home_care/<id>.mp3 (generated from 'ar').",
+  "people": {
+    "father": {
+      "name": {
+        "ar": "أبو محمد",
+        "en": "Abu Mohammed"
+      },
+      "role": {
+        "ar": "الوالد",
+        "en": "Father"
+      }
+    },
+    "son": {
+      "name": {
+        "ar": "محمد",
+        "en": "Mohammed"
+      },
+      "role": {
+        "ar": "الابن",
+        "en": "Son"
+      }
+    },
+    "doctor": {
+      "name": {
+        "ar": "د. خالد",
+        "en": "Dr. Khalid"
+      },
+      "role": {
+        "ar": "استشارة طبية عن بُعد · التعاونية",
+        "en": "Tawuniya telemedicine"
+      }
+    }
+  },
+  "living_room": [
+    {
+      "id": "f1",
+      "who": "father",
+      "ar": "آه يا ولدي... والله إني تعبان اليوم، وحاس بحرارة ودوخة.",
+      "en": "Oh my son... I'm really unwell today. I feel feverish and dizzy."
+    },
+    {
+      "id": "s1",
+      "who": "son",
+      "ar": "سلامتك يبه! يلا نروح المستشفى نكشف عليك.",
+      "en": "Get well, Dad! Come on, let's go to the hospital and get you checked."
+    },
+    {
+      "id": "f2",
+      "who": "father",
+      "ar": "ما أقدر يا ولدي... تعبان وما فيني حيل أنزل وأطلع.",
+      "en": "I can't, son... I'm too tired to go out."
+    },
+    {
+      "id": "s2",
+      "who": "son",
+      "ar": "ولا يهمك يبه، عندنا خدمة الاستشارة الطبية عن بُعد من التعاونية. تكلّم الدكتور بالفيديو وإنت مرتاح في البيت.",
+      "en": "Don't worry, Dad. We have Tawuniya's remote medical consultation — you can see a doctor by video from home."
+    },
+    {
+      "id": "f3",
+      "who": "father",
+      "ar": "صدق؟ زين، خلنا نجرّب.",
+      "en": "Really? Alright, let's try it."
+    }
+  ],
+  "call": {
+    "greeting": {
+      "id": "d1",
+      "who": "doctor",
+      "ar": "السلام عليكم يا عم أبو محمد، أنا الدكتور خالد. سلامات، وش تحس فيه؟",
+      "en": "Peace be upon you, Abu Mohammed. I'm Dr. Khalid. What are you feeling?"
+    },
+    "symptoms": [
+      {
+        "id": "d2a",
+        "q": {
+          "ar": "حرارة وتعب عام من أمس",
+          "en": "Fever and general fatigue since yesterday"
+        },
+        "a": {
+          "ar": "الله يشفيك. الأعراض تدل على نزلة برد، بكتب لك خافض حرارة، وارتاح واشرب سوائل كثير.",
+          "en": "Get well soon. It looks like a cold — I'll prescribe a fever reducer. Rest and drink plenty of fluids."
+        },
+        "rx": [
+          {
+            "ar": "خافض حرارة · ٥٠٠ ملغ",
+            "en": "Fever reducer · 500 mg"
+          },
+          {
+            "ar": "أملاح إماهة فموية",
+            "en": "Oral rehydration salts"
+          }
+        ]
+      },
+      {
+        "id": "d2b",
+        "q": {
+          "ar": "كحة وألم في الحلق",
+          "en": "Cough and a sore throat"
+        },
+        "a": {
+          "ar": "سلامتك. واضح إنه التهاب بسيط في الحلق، بكتب لك دواء للكحة وغسول للحلق، وإذا زادت الحرارة كلّمنا.",
+          "en": "Get well. It looks like a mild throat infection — I'll prescribe cough medicine and a gargle. Call us if the fever rises."
+        },
+        "rx": [
+          {
+            "ar": "شراب للكحة",
+            "en": "Cough syrup"
+          },
+          {
+            "ar": "غسول للحلق",
+            "en": "Throat gargle"
+          }
+        ]
+      },
+      {
+        "id": "d2c",
+        "q": {
+          "ar": "دوخة وصداع",
+          "en": "Dizziness and headache"
+        },
+        "a": {
+          "ar": "سلامتك يا عم. لازم نقيس الضغط، وبكتب لك دواء للصداع، وإذا استمرت الدوخة لازم تزور الطوارئ.",
+          "en": "Get well. We need to check your blood pressure — I'll prescribe something for the headache. If the dizziness continues, please go to the ER."
+        },
+        "rx": [
+          {
+            "ar": "مسكّن للصداع",
+            "en": "Headache relief"
+          },
+          {
+            "ar": "جهاز قياس ضغط منزلي",
+            "en": "Home blood-pressure monitor"
+          }
+        ]
+      }
+    ],
+    "closing": {
+      "id": "d3",
+      "who": "doctor",
+      "ar": "الوصفة وصلتك الحين على التطبيق، وتقدر تختار توصيل الدواء لين البيت. الله يشفيك ويعافيك.",
+      "en": "Your prescription is in the app now, and you can have the medicine delivered home. Get well soon."
+    }
+  },
+  "delivery": {
+    "address": {
+      "ar": "المنزل · حي النرجس، الرياض",
+      "en": "Home · Al Narjis, Riyadh"
+    },
+    "eta": {
+      "ar": "خلال ٦٠ دقيقة",
+      "en": "Within 60 minutes"
+    }
+  },
+  "ending": [
+    {
+      "id": "f4",
+      "who": "father",
+      "ar": "الله يجزاك خير يا ولدي... والدكتور ما قصّر.",
+      "en": "May God reward you, son... the doctor was great."
+    },
+    {
+      "id": "s3",
+      "who": "son",
+      "ar": "العفو يبه، صحتك أهم شي. والدوا جايك لين الباب.",
+      "en": "Anytime, Dad. Your health comes first — and the medicine is on its way to the door."
+    }
+  ]
+}

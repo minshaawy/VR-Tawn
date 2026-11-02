@@ -1,0 +1,183 @@
+{
+  "_note": "Care Hub VR journey, scene by scene from 'سيناريو تجربة الواقع الافتراضي - كيرهب'. Wording must be reviewed by Care Hub / Tawuniya before public use. Audio: media/journey/<id>.mp3 (see JOURNEY_VOICE_SCRIPT.md).",
+  "people": {
+    "noura": {
+      "name": {
+        "ar": "أنتِ (نورة)",
+        "en": "You (Noura)"
+      },
+      "role": {
+        "ar": "عميلة كيرهب",
+        "en": "Care Hub customer"
+      }
+    },
+    "lama": {
+      "name": {
+        "ar": "لمى",
+        "en": "Lama"
+      },
+      "role": {
+        "ar": "موظفة الاستقبال · عيادة الواحة الطبية",
+        "en": "Receptionist · Al Waha Medical Clinic"
+      }
+    }
+  },
+  "home_intro": [
+    {
+      "id": "n1",
+      "who": "noura",
+      "ar": "عندي شوي وقت… خلّني أشوف عروض الأسنان في تطبيق كيرهب.",
+      "en": "I have a little time… let me check the dental offers on the Care Hub app."
+    }
+  ],
+  "home_wow": {
+    "id": "n2",
+    "who": "noura",
+    "ar": "واو! كلها أسماء معروفة.",
+    "en": "Wow! They're all well-known names."
+  },
+  "home_after_voucher": [
+    {
+      "id": "n3",
+      "who": "noura",
+      "ar": "تمام، القسيمة طلعت ورمز الـQR في حسابي. بس أنتظر العيادة تتصل علي.",
+      "en": "Done, the voucher is issued and the QR code is in my account. Now I wait for the clinic to call."
+    }
+  ],
+  "clinic_notify": [
+    {
+      "id": "l1",
+      "who": "lama",
+      "ar": "جانا إشعار من كيرهب: عميلة أخذت قسيمة تنظيف الأسنان. خلّني أتصل عليها وأحدد لها موعد يناسبها.",
+      "en": "A Care Hub notification: a customer got a teeth-cleaning voucher. Let me call her and set a suitable appointment."
+    }
+  ],
+  "call": {
+    "greeting": {
+      "id": "l2",
+      "who": "lama",
+      "ar": "أهلًا وسهلًا، نتواصل معك من عيادة الواحة الطبية بخصوص قسيمة تنظيف الأسنان اللي حصلتِ عليها من كيرهب. متى يناسبك نحجز لك موعد؟",
+      "en": "Hello! This is Al Waha Medical Clinic, about the teeth-cleaning voucher you got from Care Hub. When would you like us to book your appointment?"
+    },
+    "prompt": {
+      "ar": "متى يناسبك؟",
+      "en": "When suits you?"
+    },
+    "options": [
+      {
+        "id": "c_thu",
+        "q": {
+          "ar": "الخميس الساعة 5 يناسبني، متوفر؟",
+          "en": "Thursday at 5 works for me, is it available?"
+        },
+        "when": {
+          "ar": "الخميس · 5:00 م",
+          "en": "Thursday · 5:00 PM"
+        },
+        "a": {
+          "id": "l3a",
+          "ar": "أكيد، تم تأكيد موعدك يوم الخميس الساعة 5. نتشرف بزيارتك!",
+          "en": "Of course. Your appointment is confirmed for Thursday at 5. We look forward to seeing you!"
+        }
+      },
+      {
+        "id": "c_sat",
+        "q": {
+          "ar": "السبت الساعة 11 الصبح ينفع؟",
+          "en": "Does Saturday at 11 in the morning work?"
+        },
+        "when": {
+          "ar": "السبت · 11:00 ص",
+          "en": "Saturday · 11:00 AM"
+        },
+        "a": {
+          "id": "l3b",
+          "ar": "تمام، تم تأكيد موعدك يوم السبت الساعة 11 الصبح. نتشرف بزيارتك!",
+          "en": "Great. Your appointment is confirmed for Saturday at 11 AM. We look forward to seeing you!"
+        }
+      },
+      {
+        "id": "c_mon",
+        "q": {
+          "ar": "الاثنين الساعة 7 المسا؟",
+          "en": "Monday at 7 in the evening?"
+        },
+        "when": {
+          "ar": "الاثنين · 7:00 م",
+          "en": "Monday · 7:00 PM"
+        },
+        "a": {
+          "id": "l3c",
+          "ar": "أكيد، تم تأكيد موعدك يوم الاثنين الساعة 7 المسا. نتشرف بزيارتك!",
+          "en": "Of course. Your appointment is confirmed for Monday at 7 PM. We look forward to seeing you!"
+        }
+      }
+    ]
+  },
+  "arrive": [
+    {
+      "id": "n4",
+      "who": "noura",
+      "focus": "board",
+      "ar": "لوحة كيرهب! عروض وخصومات حصرية… أنا في المكان الصح.",
+      "en": "The Care Hub sign! Exclusive offers and discounts… I'm in the right place."
+    },
+    {
+      "id": "l4",
+      "who": "lama",
+      "ar": "أهلًا وسهلًا فيكِ! عندك موعد؟",
+      "en": "Welcome! Do you have an appointment?"
+    },
+    {
+      "id": "n5",
+      "who": "noura",
+      "ar": "إيه، عندي موعد تنظيف أسنان وعندي قسيمة من كيرهب.",
+      "en": "Yes, I have a teeth-cleaning appointment and a Care Hub voucher."
+    },
+    {
+      "id": "l5",
+      "who": "lama",
+      "ar": "حياكِ الله! ممكن تفتحين رمز الـQR الخاص بالقسيمة؟",
+      "en": "Welcome! Could you open the voucher's QR code?"
+    }
+  ],
+  "redeemed": [
+    {
+      "id": "l6",
+      "who": "lama",
+      "ar": "تمام، تم تفعيل عرضك! السعر بعد الخصم 200 ريال.",
+      "en": "Great, your offer is activated! The price after the discount is 200 riyals."
+    }
+  ],
+  "paid": [
+    {
+      "id": "l7",
+      "who": "lama",
+      "ar": "تم الدفع بنجاح، تفضلي بالجلوس وبنناديك بعد شوي.",
+      "en": "Payment received. Please have a seat, we'll call you shortly."
+    }
+  ],
+  "ending": [
+    {
+      "id": "n6",
+      "who": "noura",
+      "focus": "room",
+      "ar": "سهلة مرّة! اكتشفت العيادة، وأخذت القسيمة، واستفدت من العرض… وكل هذا من كيرهب.",
+      "en": "Easy! I discovered the clinic, got the voucher, and enjoyed the offer… all through Care Hub."
+    }
+  ],
+  "captions": {
+    "to_clinic_cut": {
+      "ar": "في نفس اللحظة… استقبال عيادة الواحة الطبية",
+      "en": "At the same moment… Al Waha Medical Clinic reception"
+    },
+    "back_home": {
+      "ar": "بعد دقائق… في البيت",
+      "en": "A few minutes later… at home"
+    },
+    "to_clinic": {
+      "ar": "يوم الموعد · عيادة الواحة الطبية",
+      "en": "Appointment day · Al Waha Medical Clinic"
+    }
+  }
+}

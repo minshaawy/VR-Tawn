@@ -1,0 +1,1024 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<script src="../gate.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Care Hub Clinic VR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --brand:#0E5C43; --brand-dark:#0B3D2E; --teal:#2FB48A; }
+  html, body { margin:0; height:100%; overflow:hidden; background:#0E0C14; color:#fff; font-family:Tajawal, system-ui, sans-serif;
+               -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
+  canvas#view { display:block; width:100%; height:100%; touch-action:none; }
+  button { font-family:Tajawal, system-ui, sans-serif; cursor:pointer; }
+  /* Top bar */
+  #top { position:fixed; top:20px; left:20px; right:20px; display:flex; justify-content:space-between; align-items:center; pointer-events:none; gap:12px; }
+  #top .chip { pointer-events:auto; background:rgba(11,61,46,.9); border-radius:18px; padding:14px 22px; font-weight:800; font-size:24px; }
+  #top .btns { display:flex; gap:12px; pointer-events:auto; }
+  .tbtn { font-weight:800; font-size:24px; color:#fff; background:rgba(11,61,46,.9); border:2px solid rgba(255,255,255,.25); border-radius:18px; padding:16px 26px; min-height:68px; }
+  .tbtn.vr { background:var(--brand); border-color:transparent; }
+  .tbtn:hover { filter:brightness(1.2); }
+  /* Talk prompt */
+  #prompt { position:fixed; bottom:150px; left:50%; transform:translateX(-50%); display:none; }
+  #prompt button { font-weight:800; font-size:30px; color:#fff; background:var(--brand); border:3px solid rgba(255,255,255,.35); border-radius:24px; padding:22px 40px; box-shadow:0 10px 30px rgba(0,0,0,.4); }
+  #prompt button:hover { filter:brightness(1.15); }
+  /* Dialogue card */
+  #dialog { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); width:min(980px, calc(100% - 40px)); display:none; max-height:calc(100% - 140px); overflow:auto;
+            background:rgba(22,18,34,.95); border:2px solid rgba(255,255,255,.14); border-radius:28px; padding:26px; box-sizing:border-box; box-shadow:0 18px 50px rgba(0,0,0,.5); }
+  #dialog .who { display:flex; align-items:center; gap:18px; margin-bottom:14px; padding-inline-end:150px; }
+  #dialog .who img { width:84px; height:84px; border-radius:50%; border:3px solid var(--brand); background:#fff; }
+  #dialog .who b { font-size:30px; }
+  #dialog .who small { display:block; opacity:.75; font-size:21px; }
+  #speaking { margin-inline-start:auto; display:flex; gap:5px; align-items:flex-end; height:30px; }
+  #speaking i { width:7px; background:var(--teal); border-radius:3px; height:6px; transition:height .1s; }
+  #line { font-size:30px; line-height:1.65; min-height:100px; }
+  #you { font-size:23px; color:#BFEBD6; margin-bottom:8px; display:none; }
+  #options { display:flex; flex-direction:column; gap:14px; margin-top:18px; }
+  #options button { font-weight:700; font-size:27px; line-height:1.4; text-align:start; color:#fff; background:rgba(14,92,67,.22);
+                    border:3px solid rgba(14,92,67,.75); border-radius:20px; padding:22px 26px; min-height:88px; }
+  #options button:hover, #options button:focus-visible { background:rgba(14,92,67,.6); border-color:#fff; }
+  #options .muted { background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.25); }
+  #closeTalk { position:absolute; top:18px; left:18px; font-weight:800; font-size:22px; color:#fff; background:rgba(255,255,255,.1); border:2px solid rgba(255,255,255,.25); border-radius:16px; padding:12px 20px; }
+  #steps { display:flex; gap:8px; margin-top:18px; }
+  #steps i { flex:1; height:7px; border-radius:4px; background:rgba(255,255,255,.15); }
+  #steps i.on { background:var(--brand); }
+  /* Go-to + walk pad (browser mode: the Quest has no keyboard) */
+  #nav { position:fixed; bottom:24px; left:24px; right:24px; display:flex; justify-content:space-between; align-items:flex-end; pointer-events:none; }
+  #nav > div { display:flex; gap:12px; pointer-events:auto; }
+  .nbtn { font-weight:800; font-size:24px; color:#fff; background:rgba(11,61,46,.92); border:2px solid rgba(255,255,255,.25); border-radius:20px; padding:18px 24px; min-width:96px; min-height:84px; }
+  .nbtn:hover { background:rgba(14,92,67,.75); }
+  .nbtn.go { background:rgba(63,184,201,.9); color:#0d1b2a; }
+  #pad { direction:ltr; display:grid !important; grid-template-columns:repeat(3, 96px); grid-template-rows:repeat(2, 84px); gap:10px !important; }
+  #pad .nbtn { padding:0; font-size:36px; }
+  body.talking #nav { display:none; }
+  /* Start card */
+  #start { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(14,12,20,.88); z-index:5; }
+  #start .card { background:#fff; color:var(--brand-dark); border-radius:32px; padding:44px 48px; max-width:720px; width:calc(100% - 40px); box-sizing:border-box; text-align:center; }
+  #start img { width:340px; max-width:80%; }
+  #start h1 { font-size:36px; margin:20px 0 10px; }
+  #start p { margin:8px 0; color:#555; font-size:24px; line-height:1.5; }
+  #start .row { display:flex; gap:16px; justify-content:center; margin-top:26px; flex-wrap:wrap; }
+  #start button { font-weight:800; font-size:30px; border:0; border-radius:22px; padding:24px 40px; min-width:260px; }
+  #go { background:var(--brand-dark); color:#fff; }
+  #goVR { background:var(--brand); color:#fff; }
+  #start button:disabled { opacity:.45; }
+  #status { font-size:20px; color:#888; margin-top:14px; direction:ltr; }
+  /* Phones and small tablets: smaller bars, dialogue and cards so nothing overflows */
+  @media (max-width: 820px) {
+    #top { top:10px; left:10px; right:10px; flex-wrap:wrap; gap:6px; }
+    #top .chip { font-size:15px; padding:8px 12px; }
+    #top .btns { flex-wrap:wrap; justify-content:flex-end; gap:6px; }
+    .tbtn { font-size:14px; padding:8px 12px; min-height:40px; border-radius:12px; }
+    #prompt { bottom:210px; width:calc(100% - 24px); } #prompt button { font-size:17px; padding:12px 18px; border-radius:16px; width:100%; }
+    #nav > div:first-child { flex-direction:column; align-items:flex-start; }
+    #dialog { bottom:12px; padding:14px; border-radius:18px; max-height:calc(100% - 110px); }
+    #dialog .who { gap:10px; padding-inline-end:90px; margin-bottom:8px; } #dialog .who img { width:48px; height:48px; }
+    #dialog .who b { font-size:18px; } #dialog .who small { font-size:13px; }
+    #line { font-size:17px; min-height:56px; } #you { font-size:14px; }
+    #options { gap:8px; margin-top:10px; } #options button { font-size:15px; padding:11px 14px; min-height:48px; border-radius:12px; border-width:2px; }
+    #closeTalk { font-size:14px; padding:7px 12px; top:10px; left:10px; }
+    #steps { margin-top:10px; } #steps i { height:4px; }
+    .nbtn { font-size:14px; padding:10px 12px; min-width:60px; min-height:48px; border-radius:12px; }
+    #pad { grid-template-columns:repeat(3, 56px); grid-template-rows:repeat(2, 48px); gap:6px !important; } #pad .nbtn { font-size:22px; }
+    #nav { bottom:12px; left:12px; right:12px; } #nav > div { gap:6px; flex-wrap:wrap; }
+    #start .card { padding:24px 20px; border-radius:20px; } #start img { width:200px; } #start h1 { font-size:22px; margin:12px 0 6px; }
+    #start p { font-size:15px; } #start button { font-size:18px; padding:14px 22px; min-width:0; flex:1; } #start .row { gap:10px; }
+    #endCard .card { padding:28px 20px; } #endCard img { width:220px; } #endCard h2 { font-size:21px; } #endCard p { font-size:15px; }
+    #endCard button { font-size:18px; padding:12px 22px; }
+  }
+  #wrongway { display:none; position:fixed; inset:0; z-index:9; background:rgba(18,16,24,.96); align-items:center; justify-content:center; text-align:center; padding:24px; }
+  /* Closing card: Care Hub logo + tagline (last scene of the scenario) */
+  #endCard { display:none; position:fixed; inset:0; z-index:6; align-items:center; justify-content:center; background:rgba(8,30,22,.9); padding:24px; }
+  #endCard .card { background:#fff; color:#0B3D2E; border-radius:34px; padding:48px 44px; max-width:760px; width:100%; box-sizing:border-box; text-align:center; box-shadow:0 30px 80px rgba(0,0,0,.5); }
+  #endCard img { width:380px; max-width:85%; }
+  #endCard h2 { font-size:34px; line-height:1.5; margin:26px 0 8px; }
+  #endCard p { font-size:22px; color:#4b6b5e; margin:0 0 26px; line-height:1.6; }
+  #endCard button { font-weight:800; font-size:28px; color:#fff; background:#0E5C43; border:0; border-radius:22px; padding:20px 40px; }
+  #endCard button.muted { background:#e4efe9; color:#0B3D2E; margin-inline-start:12px; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="top">
+  <div class="chip" id="where">عيادة الواحة الطبية · Care Hub</div>
+  <div class="btns">
+    <a class="tbtn" href="../" style="text-decoration:none;display:inline-flex;align-items:center;box-sizing:border-box">🏠 الرئيسية</a>
+    <a class="tbtn" href="../reception/" data-portal="0" style="text-decoration:none;display:inline-flex;align-items:center;box-sizing:border-box">🏥 استقبال المستشفى</a>
+    <a class="tbtn" href="../home/" data-portal="1" style="text-decoration:none;display:inline-flex;align-items:center;box-sizing:border-box">👴 البيت</a>
+    <a class="tbtn" href="../accident/" data-portal="2" style="text-decoration:none;display:inline-flex;align-items:center;box-sizing:border-box">🚗 موقع الحادث</a>
+    <button class="tbtn" id="lang">English</button>
+    <button class="tbtn vr" id="vrTop">ادخل VR 🥽</button>
+  </div>
+</div>
+<div id="prompt"><button id="talk"><span id="talkLabel"></span></button></div>
+<div id="dialog">
+  <button id="closeTalk">✕ إنهاء</button>
+  <div class="who">
+    <img id="avatar" src="" alt="">
+    <div><b id="docname"></b><small id="docrole"></small></div>
+    <div id="speaking"><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+  <div id="you"></div>
+  <div id="line"></div>
+  <div id="options"></div>
+  <div id="steps"><i></i><i></i><i></i></div>
+</div>
+<div id="nav">
+  <div>
+    <button class="nbtn go" data-goto="receptionist">👩‍💼 روح للاستقبال</button>
+    <button class="nbtn go" data-goto="rep">💚 روح لمندوبة كيرهب</button>
+    <button class="nbtn go" data-goto="dentist">🦷 روح لطبيبة الأسنان</button>
+  </div>
+  <div id="pad">
+    <button class="nbtn" data-hold="turnL">⟲</button><button class="nbtn" data-hold="fwd">▲</button><button class="nbtn" data-hold="turnR">⟳</button>
+    <span></span><button class="nbtn" data-hold="back">▼</button><span></span>
+  </div>
+</div>
+<div id="start"><div class="card">
+  <img src="assets/branding/carehub_logo.png" alt="Care Hub كيرهب">
+  <h1>عيادة الواحة الطبية · كيرهب</h1>
+  <p>أخذتي قسيمة تنظيف الأسنان من تطبيق كيرهب، واليوم موعدك. كلّمي لمى في الاستقبال وورّيها رمز الـQR من «قسائمي»، واسألي دانة مندوبة كيرهب ود. ريم طبيبة الأسنان.</p>
+  <p style="font-size:20px">في VR: امشي بالـ KAT أو العصا الشمال · وجّه الليزر واضغط الـ Trigger للاختيار · A للتحدث</p>
+  <div class="row">
+    <button id="goVR" disabled>ادخل VR 🥽</button>
+    <button id="go" disabled>ابدأ في المتصفح</button>
+  </div>
+  <div id="status">Loading…</div>
+</div></div>
+<div id="endCard"><div class="card">
+  <img src="assets/branding/carehub_logo.png" alt="Care Hub كيرهب">
+  <h2>كيرهب – اكتشف العيادات، احصل على القسيمة، وتمتع بالمزايا والعروض</h2>
+  <p id="endSub">Care Hub – discover clinics, get your voucher, and enjoy the perks and offers</p>
+  <div><button id="endClose">تمام 👍</button><button id="endAgain" class="muted">أعد التجربة</button></div>
+</div></div>
+<div id="wrongway"><div style="max-width:620px;font-size:26px;line-height:1.7">
+  <b style="font-size:32px">الصفحة دي لازم تتفتح من سيرفر</b><br>شغّل <code>serve.command</code> اللي في نفس الفولدر
+</div></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { addPortal, arrival } from '../portal.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+// Care Hub scenario: reception of Al Waha Medical Clinic (dental), duplicated from the hospital reception scene.
+// Metres: x right, y up, z towards the entrance.
+if (!/^https?:$/.test(location.protocol)) document.getElementById('wrongway').style.display = 'flex';
+
+// The phone kiosk beside the desk replays the Care Hub app flow from the real app screenshots:
+// browse clinics -> dental offers -> issue the cleaning voucher -> QR code (shown when the receptionist asks for it).
+const APP_SHOTS = ['media/app/app1.png', 'media/app/app2.png', 'media/app/app4.png', 'media/app/app3.png'];
+const APP_CAPTIONS = [
+  { ar: '١ · تصفّح العيادات في كيرهب', en: '1 · Browse clinics on Care Hub' },
+  { ar: '٢ · عروض الأسنان · خصم 15٪', en: '2 · Dental offers · 15% off' },
+  { ar: '٣ · إصدار قسيمة تنظيف الأسنان', en: '3 · Issue the cleaning voucher' },
+  { ar: '٤ · «قسائمي» · رمز QR جاهز', en: '4 · “My vouchers” · QR ready' },
+];
+const QR_SHOT = 3;
+
+// The three people you can talk to. Dialog text + audio come from assets/data/*_dialog.json and media/*.
+// Lama checks you in and redeems the voucher, Dana (Care Hub) explains the app, Dr. Reem is the dentist.
+const CHARACTERS = [
+  { key: 'receptionist', model: 'assets/models/receptionist.glb', height: 1.65,
+    pos: [0.35, -6.25], dialog: 'assets/data/reception_dialog.json', audio: 'media/reception', avatar: 'media/reception/receptionist_avatar.png',
+    name: { ar: 'لمى', en: 'Lama' }, role: { ar: 'موظفة الاستقبال · عيادة الواحة الطبية', en: 'Receptionist · Al Waha Medical Clinic' },
+    prompt: { ar: 'تحدّث مع موظفة الاستقبال', en: 'Talk to the receptionist' }, maxTurn: 1.0 },
+  { key: 'rep', model: 'assets/models/rep.glb', height: 1.66,
+    pos: [-8.2, -1.5], dialog: 'assets/data/carehub_dialog.json', audio: 'media/carehub', avatar: 'media/carehub/rep_avatar.png',
+    name: { ar: 'دانة', en: 'Dana' }, role: { ar: 'مندوبة كيرهب', en: 'Care Hub representative' },
+    prompt: { ar: 'تحدّث مع مندوبة كيرهب', en: 'Talk to the Care Hub rep' }, baseYaw: Math.PI / 2, maxTurn: Math.PI },
+  { key: 'dentist', model: 'assets/models/dentist.glb', height: 1.68,
+    pos: [5.75, -3.25], dialog: 'assets/data/dentist_dialog.json', audio: 'media/dentist', avatar: 'media/dentist/dentist_avatar.png',
+    name: { ar: 'د. ريم القحطاني', en: 'Dr. Reem Al-Qahtani' }, role: { ar: 'أخصائية أسنان تجميلي · عيادة الواحة الطبية', en: 'Cosmetic dentist · Al Waha Medical Clinic' },
+    prompt: { ar: 'تحدّث مع طبيبة الأسنان', en: 'Talk to the dentist' }, baseYaw: -0.9, maxTurn: Math.PI },
+];
+for (const c of CHARACTERS) c.data = await (await fetch(c.dialog, { cache: 'no-store' })).json();
+await Promise.all([document.fonts.load('700 64px Tajawal'), document.fonts.load('400 64px Tajawal')]).catch(() => {});
+
+// ---------------------------------------------------------------- renderer ---
+const canvas = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.95;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.xr.enabled = true;
+renderer.xr.setReferenceSpaceType('local-floor');
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#dfe7ee');
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+scene.environmentIntensity = 0.7;
+scene.add(new THREE.HemisphereLight('#ffffff', '#b8b2a8', 0.55));
+
+const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, 200);
+const player = new THREE.Group();
+player.add(camera);
+scene.add(player);
+camera.position.y = 1.65;
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// ---------------------------------------------------------------- materials ---
+const texLoader = new THREE.TextureLoader();
+function tex(name, repeat, srgb = true) {
+  const t = texLoader.load(`assets/textures/${name}.jpg`);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(repeat[0], repeat[1]);
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const M = {
+  wall: new THREE.MeshStandardMaterial({ color: '#f6f6f4', roughness: 0.9 }),
+  ceiling: new THREE.MeshStandardMaterial({ color: '#fafafa', roughness: 0.95 }),
+  panel: new THREE.MeshStandardMaterial({ color: '#ffffff', emissive: '#ffffff', emissiveIntensity: 1.6 }),
+  teal: new THREE.MeshStandardMaterial({ color: '#2FB48A', roughness: 0.4, emissive: '#2FB48A', emissiveIntensity: 0.25 }),
+  frame: new THREE.MeshStandardMaterial({ color: '#c9c9cf', roughness: 0.25, metalness: 1 }),
+  glass: new THREE.MeshPhysicalMaterial({ color: '#cfe6ee', roughness: 0.04, metalness: 0, transparent: true, opacity: 0.2, depthWrite: false }),
+  brand: new THREE.MeshStandardMaterial({ color: '#0F4A38', normalMap: tex('fabric_normal', [3, 1.4], false), roughness: 0.95 }),   // Care Hub green fabric wall
+  oak: new THREE.MeshStandardMaterial({ map: tex('oak', [2, 0.6]), normalMap: tex('oak_normal', [2, 0.6], false), roughness: 0.45 }),
+  counterTop: new THREE.MeshStandardMaterial({ map: tex('marble', [2, 0.4]), roughness: 0.15 }),
+  screenBlack: new THREE.MeshStandardMaterial({ color: '#111', roughness: 0.3, metalness: 0.4 }),
+};
+const floorMat = new THREE.MeshStandardMaterial({ map: tex('marble', [5, 4]), roughness: 0.18, color: '#e6e4ea' });
+
+// ------------------------------------------------------------------ helpers ---
+const colliders = [];   // axis-aligned boxes in XZ
+function box(w, h, d, mat, x, y, z, collide = true, cast = false) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y, z);
+  m.receiveShadow = true;
+  m.castShadow = cast;
+  scene.add(m);
+  if (collide && y - h / 2 < 1.7 && y + h / 2 > 0.3) colliders.push({ x0: x - w / 2, x1: x + w / 2, z0: z - d / 2, z1: z + d / 2 });
+  return m;
+}
+function canvasPlane(w, h, draw, px = 1024) {
+  const cnv = document.createElement('canvas');
+  cnv.width = px; cnv.height = Math.round(px * h / w);
+  draw(cnv.getContext('2d'), cnv.width, cnv.height);
+  const t = new THREE.CanvasTexture(cnv);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t, transparent: true, toneMapped: false }));
+  mesh.userData.redraw = () => { draw(cnv.getContext('2d'), cnv.width, cnv.height); t.needsUpdate = true; };
+  return mesh;
+}
+const loadImg = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src; });
+// Shrink a font until the line fits the width, then draw it (keeps every sign readable whatever the wording)
+function fitText(c, text, x, y, maxW, weight, size, minSize = 18) {
+  do c.font = `${weight} ${size}px Tajawal, sans-serif`; while (c.measureText(text).width > maxW && --size > minSize);
+  c.fillText(text, x, y);
+}
+const logoImg = await loadImg('assets/branding/carehub_logo.png');          // dark green on transparent: always draw it on a light panel
+const twLogoImg = await loadImg('assets/branding/tawuniya_logo_white.png');
+const appImgs = await Promise.all(APP_SHOTS.map(loadImg));
+// Draw the Care Hub logo centred inside a white rounded chip
+function logoChip(c, x, y, w, h) {
+  c.fillStyle = '#ffffff'; c.beginPath(); c.roundRect(x, y, w, h, h * 0.3); c.fill();
+  const lh = h * 0.68, lw = lh * logoImg.width / logoImg.height;
+  c.drawImage(logoImg, x + (w - lw) / 2, y + (h - lh) / 2, lw, lh);
+}
+
+// ------------------------------------------------------------------- layout ---
+// Lobby x[-10,10] z[-8.75,7.5] (25% larger than the hospital reception), ceiling 4.2 m. Desk at the back, dental corridor on the right,
+// Care Hub stand on the left, and the three doorways to the other scenes in a row along the right wall.
+const H = 4.2, T = 0.15;
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 16.25), floorMat);
+floor.rotation.x = -Math.PI / 2; floor.position.set(0, 0, -0.625); floor.receiveShadow = true; scene.add(floor);
+const ceil = new THREE.Mesh(new THREE.PlaneGeometry(20, 16.25), M.ceiling);
+ceil.rotation.x = Math.PI / 2; ceil.position.set(0, H, -0.625); scene.add(ceil);
+for (const x of [-6.25, -2.125, 2.125, 6.25]) for (const z of [-5.625, -1.25, 3.125]) box(1.4, 0.02, 0.7, M.panel, x, H - 0.011, z, false);
+
+// Walls: brand wall behind reception, side walls, glass entrance
+box(20, H, T, M.brand, 0, H / 2, -8.75);
+box(T, H, 16.25, M.wall, -10, H / 2, -0.625);
+box(T, H, 4.25, M.wall, 10, H / 2, -6.625);            // right wall, z[-8.75,-4.5]
+box(T, H - 2.6, 3, M.wall, 10, 2.6 + (H - 2.6) / 2, -3, false);   // over the dental corridor opening z[-4.5,-1.5]
+box(T, H, 9, M.wall, 10, H / 2, 3);                    // z[-1.5,7.5]
+for (const [x0, x1] of [[-10, -1.75], [1.75, 10]]) box(x1 - x0, 0.25, T, M.frame, (x0 + x1) / 2, 0.125, 7.5, true);
+box(20, H - 2.8, T, M.wall, 0, 2.8 + (H - 2.8) / 2, 7.5, false);
+box(20, 2.55, 0.03, M.glass, 0, 0.25 + 2.55 / 2, 7.5, true);   // glass facade (doors closed)
+for (let x = -10; x <= 10; x += 2.5) box(0.06, 2.8, 0.08, M.frame, x, 1.4, 7.5, false);
+// Clinics corridor beyond the right-hand opening
+box(4, H, T, M.wall, 12, H / 2, -4.5); box(4, H, T, M.wall, 12, H / 2, -1.5); box(T, H, 3, M.wall, 14, H / 2, -3);
+const corridorFloor = new THREE.Mesh(new THREE.PlaneGeometry(4, 3), floorMat); corridorFloor.rotation.x = -Math.PI / 2; corridorFloor.position.set(12, 0.001, -3); scene.add(corridorFloor);
+// Teal wayfinding band
+for (const [w, x, z, ry] of [[16.25, -9.92, -0.625, Math.PI / 2], [4.25, 9.92, -6.625, Math.PI / 2], [9, 9.92, 3, Math.PI / 2]]) {
+  const b = box(w, 0.08, 0.01, M.teal, x, 1.05, z, false); b.rotation.y = ry;
+}
+
+// Clinic name + Care Hub partner logo on a light panel directly behind the receptionist
+const brandPanel = canvasPlane(3.2, 0.9, (c, w, h) => {
+  c.clearRect(0, 0, w, h);
+  c.fillStyle = '#ffffff'; c.beginPath(); c.roundRect(0, 0, w, h, 60); c.fill();
+  c.direction = 'rtl'; c.textAlign = 'right'; c.fillStyle = '#0B3D2E';
+  const lh = h * 0.5, lw = lh * logoImg.width / logoImg.height, textW = w - 70 - (70 + lw + 90);
+  fitText(c, 'عيادة الواحة الطبية', w - 70, h * 0.5, textW, 800, 118);
+  c.direction = 'ltr'; c.fillStyle = '#4b6b5e'; fitText(c, 'Al Waha Medical Clinic · Dental', w - 70, h * 0.78, textW, 500, 54);
+  c.textAlign = 'left';
+  c.drawImage(logoImg, 70, (h - lh) / 2, lw, lh);
+  c.fillStyle = '#2FB48A'; c.fillRect(70 + lw + 40, h * 0.2, 6, h * 0.6);
+}, 2048);
+brandPanel.position.set(0, 2.45, -8.65); scene.add(brandPanel);
+
+// Reception desk: oak front, marble top, monitors, desk sign
+box(5.4, 1.08, 0.12, M.oak, 0, 0.54, -5.0);                 // front panel
+box(0.12, 1.08, 1.0, M.oak, -2.64, 0.54, -5.5); box(0.12, 1.08, 1.0, M.oak, 2.64, 0.54, -5.5);
+box(5.6, 0.05, 0.42, M.counterTop, 0, 1.105, -5.03, false);  // raised marble ledge
+box(5.3, 0.04, 0.75, M.counterTop, 0, 0.76, -5.5, false);    // working surface
+colliders.push({ x0: -2.7, x1: 2.7, z0: -6.05, z1: -4.94 });
+for (const x of [-1.2, 1.4]) {
+  const scr = box(0.55, 0.34, 0.03, M.screenBlack, x, 1.12, -5.62, false); scr.rotation.y = Math.PI;
+  box(0.06, 0.3, 0.06, M.frame, x, 0.92, -5.66, false);
+}
+const deskSign = canvasPlane(1.6, 0.34, (c, w, h) => {
+  c.fillStyle = '#0B3D2E'; c.fillRect(0, 0, w, h);   // text only, no logo on the desk
+  c.direction = 'rtl'; c.textAlign = 'center'; c.fillStyle = '#fff';
+  fitText(c, 'الاستقبال', w / 2, h * 0.5, w - 80, 800, 96);
+  c.direction = 'ltr'; c.fillStyle = '#d6f1e4'; fitText(c, 'Reception · Care Hub partner clinic', w / 2, h * 0.86, w - 80, 500, 52);
+});
+deskSign.position.set(0, 0.62, -4.935); scene.add(deskSign);
+
+// Queue display hanging above the desk
+let queueNo = 23;
+const queue = canvasPlane(2.2, 0.62, (c, w, h) => {
+  c.fillStyle = '#0d1b2a'; c.fillRect(0, 0, w, h);
+  c.fillStyle = '#2FB48A'; c.fillRect(0, 0, w, 14);
+  c.direction = 'rtl'; c.textAlign = 'right'; c.fillStyle = '#9fe6c7'; c.font = '700 64px Tajawal';
+  c.fillText('الرقم الحالي · Now serving', w - 36, 110);
+  c.fillStyle = '#fff'; c.font = '800 150px Tajawal'; c.textAlign = 'center'; c.direction = 'ltr';
+  c.fillText(`A-${String(queueNo).padStart(3, '0')}`, w * 0.36, 238);
+  c.font = '600 60px Tajawal'; c.fillStyle = '#F2A33A'; c.fillText('→ Counter 1', w * 0.78, 230);
+});
+queue.position.set(5.75, 2.35, -8.62); scene.add(queue);   // on the brand wall, right of the logo
+box(2.3, 0.7, 0.06, M.screenBlack, 5.75, 2.35, -8.66, false);
+setInterval(() => { queueNo = queueNo >= 40 ? 23 : queueNo + 1; queue.userData.redraw(); }, 12000);
+
+// Sign over the clinics opening
+const clinicsSign = canvasPlane(2.3, 0.5, (c, w, h) => {
+  c.fillStyle = '#0B3D2E'; c.fillRect(0, 0, w, h); c.fillStyle = '#2FB48A'; c.fillRect(0, h - 14, w, 14);
+  c.direction = 'rtl'; c.textAlign = 'right'; c.fillStyle = '#fff'; fitText(c, 'عيادة الأسنان ←', w - 40, h * 0.55, w * 0.6, 800, 96);
+  c.direction = 'ltr'; c.textAlign = 'left'; c.fillStyle = '#d6f1e4'; fitText(c, 'Dental Clinic', 40, h * 0.55, w * 0.34, 500, 54);
+});
+clinicsSign.position.set(9.9, 3.0, -3); clinicsSign.rotation.y = -Math.PI / 2; scene.add(clinicsSign);
+
+// Care Hub promo board on the left wall (the scenario's small sign: exclusive offers and discounts)
+const board = canvasPlane(2.2, 1.35, (c, w, h) => {
+  c.fillStyle = '#0B3D2E'; c.fillRect(0, 0, w, h); c.fillStyle = '#2FB48A'; c.fillRect(0, 0, w, 22);
+  c.direction = 'rtl'; c.textAlign = 'right'; c.fillStyle = '#fff';
+  fitText(c, 'عروض وخصومات حصرية من كيرهب', w - 50, 118, w - 100, 800, 66);
+  c.fillStyle = '#DDF3E8';
+  ['• اكتشف العيادات وقارن الخدمات والأسعار', '• احصل على القسيمة من التطبيق', '• ورّي رمز الـQR عند الاستقبال', '• خصم 15٪ على خدمات الأسنان']
+    .forEach((t, i) => fitText(c, t, w - 50, 215 + i * 76, w - 100, 400, 44));
+  logoChip(c, 50, h - 140, 330, 100);
+  c.direction = 'ltr'; c.textAlign = 'left'; c.fillStyle = '#9fe6c7'; fitText(c, 'carehub-app.com', 410, h - 78, w - 460, 500, 36);
+});
+board.position.set(-9.91, 1.8, -4.0); board.rotation.y = Math.PI / 2; scene.add(board);
+// Care Hub stand on the left wall where Dana stands: a roll-up banner with the offers
+const banner = canvasPlane(0.85, 2.0, (c, w, h) => {
+  const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#d6f1e4');
+  c.fillStyle = g; c.beginPath(); c.roundRect(0, 0, w, h, 40); c.fill();
+  c.fillStyle = '#0E5C43'; c.fillRect(0, h - 70, w, 70);
+  const lh = 200, lw = lh * logoImg.width / logoImg.height;
+  c.drawImage(logoImg, (w - lw) / 2, 90, lw, lh);
+  c.direction = 'rtl'; c.textAlign = 'center'; c.fillStyle = '#0B3D2E';
+  for (const [t, y] of [['اكتشف العيادات', 460], ['احصل على القسيمة', 560], ['تمتع بالعروض', 660]]) fitText(c, t, w / 2, y, w - 80, 800, 74);
+  c.fillStyle = '#ffffff'; c.beginPath(); c.roundRect(60, 760, w - 120, 150, 40); c.fill();
+  c.strokeStyle = '#2FB48A'; c.lineWidth = 6; c.stroke();
+  c.fillStyle = '#0E5C43'; fitText(c, 'خصم 15٪ على الأسنان', w / 2, 820, w - 160, 800, 64);
+  c.fillStyle = '#4b6b5e'; fitText(c, 'مجموعة الواحة الطبية', w / 2, 885, w - 160, 500, 44);
+  c.fillStyle = '#0E5C43'; fitText(c, 'خصم 10٪ أنف وأذن وحنجرة', w / 2, 1060, w - 100, 800, 64);
+  c.fillStyle = '#4b6b5e'; fitText(c, 'عيادات سفن', w / 2, 1125, w - 160, 500, 44);
+  c.fillStyle = '#0B3D2E'; fitText(c, 'اسألي دانة عن كيرهب', w / 2, 1340, w - 80, 700, 54);
+  c.fillStyle = '#2FB48A'; fitText(c, '«قسائمي» · QR · سعر مضمون', w / 2, 1430, w - 80, 700, 50);
+  c.direction = 'ltr'; c.fillStyle = '#ffffff'; fitText(c, 'carehub-app.com', w / 2, h - 22, w - 80, 500, 46);
+}, 1024);
+banner.position.set(-9.88, 1.05, -0.4); banner.rotation.y = Math.PI / 2; scene.add(banner);
+box(0.1, 0.03, 0.9, M.frame, -9.86, 0.015, -0.4, false);   // banner foot
+// Small Care Hub table sign on the counter, next to where you check in
+const tableSign = canvasPlane(0.42, 0.3, (c, w, h) => {
+  c.fillStyle = '#ffffff'; c.beginPath(); c.roundRect(0, 0, w, h, 40); c.fill();
+  const lh = h * 0.42, lw = lh * logoImg.width / logoImg.height;
+  c.drawImage(logoImg, (w - lw) / 2, h * 0.1, lw, lh);
+  c.direction = 'rtl'; c.textAlign = 'center'; c.fillStyle = '#0B3D2E';
+  fitText(c, 'ورّي رمز الـQR هنا', w / 2, h * 0.84, w - 60, 700, 60);
+});
+tableSign.position.set(-1.6, 1.3, -4.98); tableSign.rotation.x = -0.25; scene.add(tableSign);
+
+// Lights
+const sun = new THREE.DirectionalLight('#fff6ea', 1.1);
+sun.position.set(-3, 8, 6); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 0.5, far: 25 });
+sun.shadow.bias = -0.0004; sun.shadow.radius = 4;
+scene.add(sun);
+for (const [x, z] of [[0, -5], [-5, 1.25], [5, 1.25]]) { const p = new THREE.PointLight('#fff4e6', 8, 11, 2); p.position.set(x, H - 0.4, z); scene.add(p); }
+
+// ------------------------------------------------------------------ models ---
+const gltf = new GLTFLoader();
+function fit(root, { len, height }) {
+  const g = new THREE.Group(); g.add(root);
+  g.updateMatrixWorld(true);
+  let b = new THREE.Box3().setFromObject(g); const s = b.getSize(new THREE.Vector3());
+  g.scale.setScalar(height ? height / s.y : len / Math.max(s.x, s.z));
+  g.updateMatrixWorld(true);
+  b = new THREE.Box3().setFromObject(g); const c = b.getCenter(new THREE.Vector3());
+  root.position.sub(new THREE.Vector3(c.x / g.scale.x, b.min.y / g.scale.x, c.z / g.scale.x));
+  return g;
+}
+// face: direction the model's front looks, degrees around Y (0 = +z, towards the entrance).
+async function place(file, x, z, face, size, collide = true) {
+  const res = await gltf.loadAsync(`assets/models/${file}.glb`);
+  res.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  const holder = new THREE.Group();
+  holder.position.set(x, 0, z);
+  holder.rotation.y = (face + 180) * Math.PI / 180;   // generated furniture faces -z
+  holder.add(fit(res.scene, size));
+  scene.add(holder);
+  if (collide) { const b = new THREE.Box3().setFromObject(holder); colliders.push({ x0: b.min.x, x1: b.max.x, z0: b.min.z, z1: b.max.z }); }
+}
+
+// People (Meshy characters face +z already)
+async function loadCharacter(c) {
+  const res = await gltf.loadAsync(c.model);
+  res.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+  c.group = new THREE.Group();
+  c.group.add(fit(res.scene, { height: c.height }));
+  c.group.position.set(c.pos[0], 0, c.pos[1]);
+  c.group.rotation.y = c.baseYaw || 0;
+  scene.add(c.group);
+  colliders.push({ x0: c.pos[0] - 0.3, x1: c.pos[0] + 0.3, z0: c.pos[1] - 0.25, z1: c.pos[1] + 0.25 });
+}
+
+// ------------------------------------------------------------- phone kiosk ---
+const phone = new THREE.Group();
+const phoneBody = new THREE.Mesh(new RoundedBoxGeometry(1.05, 2.1, 0.09, 6, 0.12),
+  new THREE.MeshPhysicalMaterial({ color: '#2b2a30', metalness: 0.9, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.1 }));
+phoneBody.position.y = 1.2; phoneBody.castShadow = true; phone.add(phoneBody);
+const screenCanvas = document.createElement('canvas');
+screenCanvas.width = 960; screenCanvas.height = 1960;
+const sc = screenCanvas.getContext('2d');
+// App flow on the kiosk. `shot` = which screenshot, `redeemed` = overlay after the receptionist scans the QR.
+const phoneState = { shot: 0, since: 0, redeemed: false, dirty: true, lang: 'ar' };
+function drawAppScreen() {
+  const w = screenCanvas.width, h = screenCanvas.height, img = appImgs[phoneState.shot];
+  sc.fillStyle = '#f7faf8'; sc.fillRect(0, 0, w, h);
+  const k = Math.max(w / img.width, h / img.height), iw = img.width * k, ih = img.height * k;
+  sc.drawImage(img, (w - iw) / 2, 0, iw, ih);
+  // step caption
+  const ar = phoneState.lang === 'ar', cap = APP_CAPTIONS[phoneState.shot][ar ? 'ar' : 'en'];
+  sc.fillStyle = 'rgba(11,61,46,0.92)'; sc.beginPath(); sc.roundRect(40, h - 190, w - 80, 110, 40); sc.fill();
+  sc.direction = ar ? 'rtl' : 'ltr'; sc.textAlign = 'center'; sc.fillStyle = '#fff'; sc.font = '700 50px Tajawal';
+  sc.fillText(cap, w / 2, h - 118);
+  if (phoneState.redeemed) {   // "voucher redeemed" sheet over the QR screen
+    sc.fillStyle = 'rgba(8,30,22,0.55)'; sc.fillRect(0, 0, w, h);
+    sc.fillStyle = '#ffffff'; sc.beginPath(); sc.roundRect(70, h * 0.3, w - 140, h * 0.34, 60); sc.fill();
+    sc.fillStyle = '#2FB48A'; sc.beginPath(); sc.arc(w / 2, h * 0.3 + 150, 90, 0, Math.PI * 2); sc.fill();
+    sc.strokeStyle = '#fff'; sc.lineWidth = 18; sc.lineCap = 'round'; sc.beginPath();
+    sc.moveTo(w / 2 - 42, h * 0.3 + 152); sc.lineTo(w / 2 - 8, h * 0.3 + 188); sc.lineTo(w / 2 + 50, h * 0.3 + 112); sc.stroke();
+    sc.direction = ar ? 'rtl' : 'ltr'; sc.textAlign = 'center'; sc.fillStyle = '#0B3D2E';
+    sc.font = '800 66px Tajawal'; sc.fillText(ar ? 'تم استخدام القسيمة بنجاح!' : 'Voucher redeemed!', w / 2, h * 0.3 + 330);
+    sc.font = '500 48px Tajawal'; sc.fillStyle = '#4b6b5e'; sc.fillText(ar ? 'تنظيف الأسنان · عيادة الواحة الطبية' : 'Teeth cleaning · Al Waha Medical', w / 2, h * 0.3 + 410);
+    sc.font = '800 92px Tajawal'; sc.fillStyle = '#0E5C43'; sc.fillText(ar ? 'السعر بعد الخصم 200 ريال' : 'After discount: 200 SAR', w / 2, h * 0.3 + 540);
+  }
+  sc.fillStyle = 'rgba(0,0,0,.55)'; sc.beginPath(); sc.roundRect(w / 2 - 70, h - 40, 140, 12, 6); sc.fill();
+}
+drawAppScreen();
+const phoneApp = {
+  show(i) { phoneState.shot = i; phoneState.since = Infinity; phoneState.dirty = true; },   // hold this screen (no auto-advance)
+  redeem() { phoneState.shot = QR_SHOT; phoneState.redeemed = true; phoneState.since = Infinity; phoneState.dirty = true; },
+  reset() { phoneState.shot = 0; phoneState.redeemed = false; phoneState.since = 0; phoneState.dirty = true; },
+  tick(t) {
+    if (phoneState.since !== Infinity && t - phoneState.since > 6) { phoneState.shot = (phoneState.shot + 1) % appImgs.length; phoneState.since = t; phoneState.dirty = true; }
+    if (phoneState.lang !== LANG) { phoneState.lang = LANG; phoneState.dirty = true; }
+    if (phoneState.dirty) { phoneState.dirty = false; drawAppScreen(); screenTex.needsUpdate = true; }
+  },
+};
+const screenTex = new THREE.CanvasTexture(screenCanvas);
+screenTex.colorSpace = THREE.SRGBColorSpace;
+const screenMat = new THREE.MeshBasicMaterial({ map: screenTex, toneMapped: false });
+const screen = new THREE.Mesh(new RoundedBoxGeometry(0.97, 2.0, 0.005, 4, 0.09), screenMat);
+screen.position.set(0, 1.2, 0.047); phone.add(screen);
+const island = new THREE.Mesh(new RoundedBoxGeometry(0.22, 0.06, 0.006, 4, 0.03), new THREE.MeshBasicMaterial({ color: '#000' }));
+island.position.set(0, 2.12, 0.052); phone.add(island);
+const base = new THREE.Mesh(new RoundedBoxGeometry(0.9, 0.06, 0.5, 4, 0.03), new THREE.MeshStandardMaterial({ color: '#d7d7dc', metalness: 0.8, roughness: 0.3 }));
+base.position.y = 0.03; base.receiveShadow = true; phone.add(base);
+const neck = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.16, 0.06), base.material);
+neck.position.set(0, 0.12, -0.02); phone.add(neck);
+phone.position.set(-4.9, 0, -4.9);   // beside the reception desk
+phone.rotation.y = 0.45;
+scene.add(phone);
+colliders.push({ x0: -5.45, x1: -4.35, z0: -5.25, z1: -4.55 });
+
+// ------------------------------------------------------------------- input ---
+let yaw = 0, pitch = 0, aHeld = false;
+player.position.set(0, 0, 5.5);
+const keys = new Set();
+addEventListener('keydown', e => {
+  keys.add(e.code);
+  if (e.code === 'KeyE' && nearest && !talking) startDialog(nearest);
+  if (e.code === 'KeyL') setLang(LANG === 'ar' ? 'en' : 'ar');
+});
+addEventListener('keyup', e => keys.delete(e.code));
+let dragging = false, lx = 0, ly = 0;
+canvas.addEventListener('pointerdown', e => { dragging = true; lx = e.clientX; ly = e.clientY; });
+addEventListener('pointerup', () => { dragging = false; });
+addEventListener('pointermove', e => {
+  if (!dragging || talking) return;
+  yaw -= (e.clientX - lx) * 0.004; pitch = Math.max(-1.2, Math.min(1.2, pitch - (e.clientY - ly) * 0.004));
+  lx = e.clientX; ly = e.clientY;
+});
+function collide(x, z) {
+  const R = 0.28;
+  for (let k = 0; k < 2; k++) for (const b of colliders) {
+    const cx = Math.max(b.x0, Math.min(b.x1, x)), cz = Math.max(b.z0, Math.min(b.z1, z));
+    const dx = x - cx, dz = z - cz, d = Math.hypot(dx, dz);
+    if (d < R) {
+      if (d > 1e-6) { x = cx + dx / d * R; z = cz + dz / d * R; }
+      else { const l = x - b.x0, r = b.x1 - x, f = z - b.z0, bk = b.z1 - z, m = Math.min(l, r, f, bk);
+        if (m === l) x = b.x0 - R; else if (m === r) x = b.x1 + R; else if (m === f) z = b.z0 - R; else z = b.z1 + R; }
+    }
+  }
+  return [x, z];
+}
+
+// ------------------------------------------------------------------ dialog ---
+let LANG = 'ar';
+const pick = v => v[LANG] ?? v.ar;
+const promptEl = document.getElementById('prompt'), dialogEl = document.getElementById('dialog');
+const lineEl = document.getElementById('line'), youEl = document.getElementById('you'), optsEl = document.getElementById('options');
+const stepEls = [...document.querySelectorAll('#steps i')], bars = [...document.querySelectorAll('#speaking i')];
+let talking = null, nearest = null, audio = null, analyser = null, audioCtx = null, typing = null;
+
+function say(c, entry) {
+  return new Promise(resolve => {
+    clearInterval(typing);
+    const text = pick(entry);
+    let i = 0;
+    lineEl.textContent = '';
+    typing = setInterval(() => { lineEl.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(typing); }, 28);
+    if (audio) audio.pause();
+    audio = new Audio(`${c.audio}/${entry.id}.mp3`);
+    try {
+      audioCtx = audioCtx || new AudioContext();
+      const src = audioCtx.createMediaElementSource(audio);
+      analyser = audioCtx.createAnalyser(); analyser.fftSize = 64;
+      src.connect(analyser); analyser.connect(audioCtx.destination);
+    } catch (e) { analyser = null; }
+    const done = () => { analyser = null; lineEl.textContent = text; resolve(); };
+    audio.onended = done;
+    audio.play().catch(() => setTimeout(done, text.length * 60));
+  });
+}
+function options(list, onPick) {
+  optsEl.innerHTML = '';
+  for (const o of list) {
+    const b = document.createElement('button');
+    b.textContent = o.label;
+    if (o.muted) b.className = 'muted';
+    b.onclick = () => { optsEl.innerHTML = ''; onPick(o); };
+    optsEl.appendChild(b);
+  }
+}
+let session = 0;
+async function startDialog(c) {
+  const id = ++session;
+  talking = c;
+  document.body.classList.add('talking');
+  promptEl.style.display = 'none';
+  dialogEl.style.display = 'block';
+  document.getElementById('avatar').src = c.avatar;
+  document.getElementById('docname').textContent = pick(c.name);
+  document.getElementById('docrole').textContent = pick(c.role);
+  youEl.style.display = 'none'; optsEl.innerHTML = '';
+  stepEls.forEach(s => s.classList.remove('on'));
+  const D = c.data;
+  const isReception = c.key === 'receptionist';
+  if (isReception) phoneApp.reset();
+  await say(c, D.greeting);
+  for (let r = 0; r < D.rounds.length; r++) {
+    if (id !== session) return;
+    if (isReception && r === 1) phoneApp.show(QR_SHOT);   // she asked for the QR: the kiosk opens "My vouchers"
+    const chosen = await new Promise(res => options(D.rounds[r].options.map(o => ({ label: pick(o.q), o })), x => res(x.o)));
+    stepEls[r].classList.add('on');
+    youEl.style.display = 'block';
+    youEl.textContent = (LANG === 'ar' ? 'أنت: ' : 'You: ') + pick(chosen.q);
+    if (isReception && r === 1) setTimeout(() => { if (id === session) phoneApp.redeem(); }, 1200);   // scan -> "voucher redeemed"
+    await say(c, { id: chosen.id, ...chosen.a });
+  }
+  if (id !== session) return;
+  stepEls[2].classList.add('on');
+  youEl.style.display = 'none';
+  await say(c, D.closing);
+  if (id !== session) return;
+  const thanks = c.key === 'dentist' ? { ar: 'شكراً يا دكتورة', en: 'Thank you, doctor' } : { ar: 'شكراً جزيلاً', en: 'Thank you' };
+  options([{ label: pick(thanks) }, { label: LANG === 'ar' ? 'ابدأ من جديد' : 'Start again', muted: true, again: true }],
+    o => { if (o.again) startDialog(c); else { endDialog(); if (isReception) showEnd(); } });
+}
+// Closing scene: Care Hub logo + tagline. In the browser it is a DOM card; in VR a panel in front of you (see `vr`).
+const endCard = document.getElementById('endCard');
+function showEnd() {
+  document.getElementById('endSub').textContent = LANG === 'ar'
+    ? 'Care Hub – discover clinics, get your voucher, and enjoy the perks and offers'
+    : 'كيرهب – اكتشف العيادات، احصل على القسيمة، وتمتع بالمزايا والعروض';
+  document.getElementById('endClose').textContent = LANG === 'ar' ? 'تمام 👍' : 'Done 👍';
+  document.getElementById('endAgain').textContent = LANG === 'ar' ? 'أعد التجربة' : 'Replay';
+  endCard.style.display = 'flex';
+  vr.showEnd();
+}
+function hideEnd() { endCard.style.display = 'none'; vr.hideEnd(); }
+document.getElementById('endClose').onclick = hideEnd;
+document.getElementById('endAgain').onclick = () => { hideEnd(); phoneApp.reset(); goTo(CHARACTERS[0]); startDialog(CHARACTERS[0]); };
+function endDialog() {
+  session++;
+  if (audio) audio.pause();
+  talking = null;
+  document.body.classList.remove('talking');
+  dialogEl.style.display = 'none';
+  vr.hideDialog();
+  if (!phoneState.redeemed) phoneApp.reset();   // keep the "redeemed" sheet up after a finished visit
+}
+document.getElementById('closeTalk').onclick = () => endDialog();
+document.getElementById('talk').onclick = () => { if (nearest) startDialog(nearest); };
+addEventListener('keydown', e => { if (e.code === 'Escape' && talking) endDialog(); });
+
+const langBtn = document.getElementById('lang');
+function setLang(l) { LANG = l; langBtn.textContent = l === 'ar' ? 'English' : 'عربي'; }
+langBtn.onclick = () => setLang(LANG === 'ar' ? 'en' : 'ar');
+
+// --------------------------------------------------------------- start / XR ---
+// Immersive VR session (Quest browser). The DOM UI is invisible inside the headset, so VR gets 3D panels below.
+let xrSession = null;
+async function enterVR() {
+  if (!window.isSecureContext) {   // WebXR only exists on https; GitHub Pages serves http until the domain's certificate is issued
+    alert(LANG === 'ar' ? 'الـ VR يشتغل بس على https. افتح الرابط وهو يبدأ بـ https://' : 'VR only works over https. Open the link starting with https://');
+    return;
+  }
+  if (!navigator.xr || !(await navigator.xr.isSessionSupported('immersive-vr').catch(() => false))) {
+    alert(LANG === 'ar' ? 'افتح الصفحة من متصفح الميتا كويست عشان تدخل VR' : 'Open this page in the Meta Quest browser to enter VR');
+    return;
+  }
+  if (audioCtx) audioCtx.resume();
+  xrSession = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking'] });
+  xrSession.addEventListener('end', () => { xrSession = null; vr.hideDialog(); });
+  await renderer.xr.setSession(xrSession);
+}
+document.getElementById('vrTop').onclick = enterVR;
+const statusEl = document.getElementById('status'), goBtn = document.getElementById('go'), goVRBtn = document.getElementById('goVR');
+statusEl.textContent = 'Loading Care Hub clinic…';
+await Promise.all([
+  ...CHARACTERS.map(loadCharacter),
+  place('waiting_seats', -7.0, 0.5, 0, { len: 1.9 }), place('waiting_seats', -4.25, 0.5, 0, { len: 1.9 }),
+  place('waiting_seats', -7.0, 3.0, 180, { len: 1.9 }), place('waiting_seats', -4.25, 3.0, 180, { len: 1.9 }),
+  place('plant', -9.25, -8.0, 0, { height: 1.8 }), place('plant', 9.25, -8.0, 0, { height: 1.8 }),
+  place('plant', -9.25, 6.6, 0, { height: 1.7 }), place('plant', 9.25, 6.6, 0, { height: 1.7 }),
+  place('wheelchair', -8.6, 4.9, 120, { height: 0.95 }), place('wheelchair', -8.1, 4.1, 120, { height: 0.95 }),
+  place('plant', -2.6, 1.75, 0, { height: 1.2 }),
+]).catch(e => console.warn('Some models failed', e));
+statusEl.textContent = '';
+goBtn.disabled = goVRBtn.disabled = false;
+function begin() {
+  document.getElementById('start').style.display = 'none';
+  phoneState.since = 0;
+  audioCtx = audioCtx || new AudioContext();
+  audioCtx.resume();
+}
+goBtn.onclick = begin;
+goVRBtn.onclick = () => { begin(); enterVR(); };
+
+// Portal + top-bar link to the other scene (keeps the language; in VR it asks the next page to re-enter VR)
+const portals = [
+  addPortal({ THREE, scene, ...{ x: 9.3, z: 1.8, face: [5, 1.8], href: '../reception/', color: '#3FB8C9', label: { ar: 'روح لاستقبال المستشفى', en: 'Go to the hospital reception' } }, getLang: () => LANG, inXR: () => renderer.xr.isPresenting }),
+  addPortal({ THREE, scene, ...{ x: 9.3, z: 4.0, face: [5, 4.0], href: '../home/', color: '#2FA36B', label: { ar: 'روح لبيت أبو محمد', en: 'Go to Abu Mohammed\'s home' } }, getLang: () => LANG, inXR: () => renderer.xr.isPresenting }),
+  addPortal({ THREE, scene, ...{ x: 9.3, z: 6.2, face: [5, 6.2], href: '../accident/', color: '#F2A33A', label: { ar: 'روح لموقع الحادث', en: 'Go to the accident site' } }, getLang: () => LANG, inXR: () => renderer.xr.isPresenting }),
+];
+for (const a of document.querySelectorAll('[data-portal]')) a.onclick = e => { e.preventDefault(); portals[+a.dataset.portal].go(); };
+if (arrival({ setLang, enterVR })) goVRBtn.focus();
+window.__carehub = { player, CHARACTERS, startDialog, phoneApp, phoneState, showEnd, hideEnd, renderer, scene, camera, setYaw: v => { yaw = v; }, setPitch: v => { pitch = v; } };   // test hook
+
+// ------------------------------------------------- browser: go-to + walk pad ---
+const hold = {};
+for (const el of document.querySelectorAll('[data-hold]')) {
+  const k = el.dataset.hold;
+  el.addEventListener('pointerdown', e => { hold[k] = true; el.setPointerCapture(e.pointerId); e.preventDefault(); });
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) el.addEventListener(ev, () => { hold[k] = false; });
+}
+function goTo(c) {
+  const by = c.baseYaw || 0, d = c.key === 'receptionist' ? 1.9 : 1.6;
+  const [x, z] = collide(c.pos[0] + Math.sin(by) * d, c.pos[1] + Math.cos(by) * d);
+  player.position.x = x; player.position.z = z;
+  yaw = Math.atan2(-(c.pos[0] - x), -(c.pos[1] - z)); pitch = -0.08;
+}
+for (const el of document.querySelectorAll('[data-goto]'))
+  el.onclick = () => goTo(CHARACTERS.find(c => c.key === el.dataset.goto));
+
+// ------------------------------------------------------------- VR panels ---
+// Inside the headset the DOM is invisible, so the dialogue is drawn on a canvas panel in the room.
+// Answer buttons are big (~8 cm tall at arm's length) and you pick them with the controller laser + trigger.
+// The panel mirrors the DOM dialogue, so the dialogue logic itself is shared with the browser mode.
+const vr = (() => {
+  const W = 1200, H = 1300, PW = 0.82, PH = PW * H / W;
+  const cnv = document.createElement('canvas'); cnv.width = W; cnv.height = H;
+  const g = cnv.getContext('2d');
+  const tex = new THREE.CanvasTexture(cnv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(PW, PH), new THREE.MeshBasicMaterial({ map: tex, transparent: true, toneMapped: false, depthTest: false }));   // drawn over the desk
+  panel.visible = false; panel.renderOrder = 10; scene.add(panel);
+
+  const pc = document.createElement('canvas'); pc.width = 1140; pc.height = 240;
+  const pg = pc.getContext('2d');
+  const ptex = new THREE.CanvasTexture(pc); ptex.colorSpace = THREE.SRGBColorSpace;
+  const prompt = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.2), new THREE.MeshBasicMaterial({ map: ptex, transparent: true, toneMapped: false }));
+  prompt.visible = false; prompt.renderOrder = 10; scene.add(prompt);
+
+  // Closing card panel (Care Hub logo + tagline), shown in front of you when the receptionist visit ends
+  const ec = document.createElement('canvas'); ec.width = 1200; ec.height = 760;
+  const eg = ec.getContext('2d');
+  const etex = new THREE.CanvasTexture(ec); etex.colorSpace = THREE.SRGBColorSpace;
+  const endPanel = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.0 * 760 / 1200), new THREE.MeshBasicMaterial({ map: etex, transparent: true, toneMapped: false, depthTest: false }));
+  endPanel.visible = false; endPanel.renderOrder = 11; scene.add(endPanel);
+  function drawEnd() {
+    const w = ec.width, h = ec.height, ar = LANG === 'ar';
+    eg.clearRect(0, 0, w, h);
+    eg.fillStyle = '#ffffff'; eg.beginPath(); eg.roundRect(0, 0, w, h, 70); eg.fill();
+    eg.strokeStyle = '#2FB48A'; eg.lineWidth = 10; eg.beginPath(); eg.roundRect(5, 5, w - 10, h - 10, 66); eg.stroke();
+    const lh = 190, lw = lh * logoImg.width / logoImg.height;
+    eg.drawImage(logoImg, (w - lw) / 2, 70, lw, lh);
+    eg.direction = ar ? 'rtl' : 'ltr'; eg.textAlign = 'center'; eg.fillStyle = '#0B3D2E'; eg.font = '800 50px Tajawal';
+    const lines = ar ? ['كيرهب – اكتشف العيادات، احصل على القسيمة،', 'وتمتع بالمزايا والعروض'] : ['Care Hub – discover clinics, get your voucher,', 'and enjoy the perks and offers'];
+    lines.forEach((l, i) => eg.fillText(l, w / 2, 360 + i * 70));
+    eg.fillStyle = hover === 60 ? '#2a8f6a' : '#0E5C43'; eg.beginPath(); eg.roundRect(w / 2 - 220, h - 170, 440, 110, 34); eg.fill();
+    eg.fillStyle = '#fff'; eg.font = '800 46px Tajawal'; eg.fillText(ar ? 'تمام 👍' : 'Done 👍', w / 2, h - 100);
+    etex.needsUpdate = true;
+  }
+  const avatars = {};
+  for (const c of CHARACTERS) { const i = new Image(); i.src = c.avatar; avatars[c.avatar] = i; }
+  let rects = [], sig = '', hover = -1, promptSig = '', lastDraw = 0;
+  const $ = id => document.getElementById(id);
+
+  function wrap(text, maxW) {
+    const words = text.split(/\s+/).filter(Boolean), lines = []; let cur = '';
+    for (const w of words) { const t = cur ? cur + ' ' + w : w; if (g.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }
+    if (cur) lines.push(cur);
+    return lines;
+  }
+  const rr = (x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r); };
+  function draw() {
+    const rtl = LANG === 'ar', P = 48, X = rtl ? W - P : P;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = 'rgba(22,18,34,0.96)'; rr(0, 0, W, H, 56); g.fill();
+    g.strokeStyle = 'rgba(14,92,67,0.8)'; g.lineWidth = 4; rr(2, 2, W - 4, H - 4, 54); g.stroke();
+    g.direction = rtl ? 'rtl' : 'ltr'; g.textAlign = rtl ? 'right' : 'left'; g.textBaseline = 'alphabetic';
+    rects = [];
+    // header: avatar, name, role
+    const av = avatars[$('avatar').getAttribute('src')], AS = 120, ax = rtl ? W - P - AS : P;
+    g.save(); g.beginPath(); g.arc(ax + AS / 2, P + AS / 2, AS / 2, 0, Math.PI * 2); g.fillStyle = '#fff'; g.fill(); g.clip();
+    if (av && av.complete) g.drawImage(av, ax, P, AS, AS);
+    g.restore();
+    g.strokeStyle = '#0E5C43'; g.lineWidth = 6; g.beginPath(); g.arc(ax + AS / 2, P + AS / 2, AS / 2, 0, Math.PI * 2); g.stroke();
+    const tx = rtl ? W - P - AS - 28 : P + AS + 28;
+    g.fillStyle = '#fff'; g.font = '800 54px Tajawal'; g.fillText($('docname').textContent, tx, P + 62);
+    g.fillStyle = 'rgba(255,255,255,0.72)'; g.font = '500 34px Tajawal'; g.fillText($('docrole').textContent, tx, P + 110);
+    // close button in the far corner
+    const cw = 170, ch = 88, cx = rtl ? P : W - P - cw, cy = P + 16;
+    g.fillStyle = hover === 99 ? 'rgba(220,60,70,0.9)' : 'rgba(255,255,255,0.1)'; rr(cx, cy, cw, ch, 26); g.fill();
+    g.save(); g.textAlign = 'center'; g.fillStyle = '#fff'; g.font = '800 38px Tajawal'; g.fillText(rtl ? '✕ إنهاء' : '✕ End', cx + cw / 2, cy + 58); g.restore();
+    rects.push({ id: 99, x: cx, y: cy, w: cw, h: ch });
+    let y = P + AS + 40;
+    // "You: ..."
+    const you = $('you');
+    if (you.style.display !== 'none' && you.textContent) {
+      g.fillStyle = '#BFEBD6'; g.font = '600 36px Tajawal';
+      for (const l of wrap(you.textContent, W - 2 * P)) { y += 46; g.fillText(l, X, y); }
+      y += 14;
+    }
+    // what they are saying
+    g.fillStyle = '#fff'; g.font = '500 46px Tajawal';
+    const top = y;
+    for (const l of wrap($('line').textContent, W - 2 * P)) { y += 68; g.fillText(l, X, y); }
+    y = Math.max(y, top + 68 * 3) + 34;
+    // answer buttons
+    [...document.querySelectorAll('#options button')].forEach((btn, i) => {
+      g.font = '700 42px Tajawal';
+      const ls = wrap(btn.textContent, W - 2 * P - 60), bh = Math.max(116, 44 + ls.length * 56);
+      const muted = btn.classList.contains('muted'), hov = hover === i;
+      g.fillStyle = hov ? 'rgba(14,92,67,0.95)' : muted ? 'rgba(255,255,255,0.08)' : 'rgba(14,92,67,0.28)';
+      rr(P, y, W - 2 * P, bh, 30); g.fill();
+      g.strokeStyle = hov ? '#fff' : muted ? 'rgba(255,255,255,0.3)' : 'rgba(14,92,67,0.95)'; g.lineWidth = hov ? 6 : 4; g.stroke();
+      g.fillStyle = '#fff';
+      ls.forEach((l, k) => g.fillText(l, rtl ? W - P - 30 : P + 30, y + bh / 2 + 15 - (ls.length - 1) * 28 + k * 56));
+      rects.push({ id: i, x: P, y, w: W - 2 * P, h: bh, el: btn });
+      y += bh + 22;
+    });
+    // progress steps
+    const steps = [...document.querySelectorAll('#steps i')], sw = (W - 2 * P - 32) / 3;
+    steps.forEach((st, i) => { g.fillStyle = st.classList.contains('on') ? '#0E5C43' : 'rgba(255,255,255,0.15)'; rr(P + i * (sw + 16), H - P - 12, sw, 12, 6); g.fill(); });
+    tex.needsUpdate = true;
+  }
+  function drawPrompt(text) {
+    const w = pc.width, h = pc.height;
+    pg.clearRect(0, 0, w, h);
+    pg.fillStyle = hover === 50 ? '#2a8f6a' : '#0E5C43'; pg.beginPath(); pg.roundRect(6, 6, w - 12, h - 12, 60); pg.fill();
+    pg.strokeStyle = 'rgba(255,255,255,0.6)'; pg.lineWidth = 6; pg.stroke();
+    pg.direction = LANG === 'ar' ? 'rtl' : 'ltr'; pg.textAlign = 'center'; pg.fillStyle = '#fff';
+    pg.font = '800 66px Tajawal'; pg.fillText(text, w / 2, 112);
+    pg.font = '500 40px Tajawal'; pg.fillStyle = 'rgba(255,255,255,0.85)';
+    pg.fillText(LANG === 'ar' ? 'وجّه الليزر واضغط Trigger · أو زر A' : 'Point & pull the trigger · or press A', w / 2, 186);
+    ptex.needsUpdate = true;
+  }
+  const eye = new THREE.Vector3();
+  function place(c) {
+    camera.getWorldPosition(eye);
+    const to = new THREE.Vector3(c.group.position.x - eye.x, 0, c.group.position.z - eye.z).normalize();
+    const right = new THREE.Vector3(-to.z, 0, to.x);
+    panel.position.copy(eye).addScaledVector(to, 0.85).addScaledVector(right, 0.12);
+    panel.position.y = eye.y - 0.5;                          // below the face of the person you talk to
+    panel.lookAt(eye.x, panel.position.y + 0.25, eye.z);     // tilted up a little towards your eyes
+    panel.visible = true; sig = ''; hover = -1;
+  }
+  let endSig = '';
+  return {
+    panel, prompt, endPanel,
+    hideDialog() { panel.visible = false; },
+    showEnd() {
+      camera.getWorldPosition(eye);
+      const f = new THREE.Vector3(); camera.getWorldDirection(f); f.y = 0; f.normalize();
+      endPanel.position.copy(eye).addScaledVector(f, 1.1); endPanel.position.y = eye.y - 0.1;
+      endPanel.lookAt(eye.x, endPanel.position.y, eye.z);
+      endPanel.visible = true; endSig = '';
+    },
+    hideEnd() { endPanel.visible = false; },
+    update(inXR, t) {
+      if (!inXR) { panel.visible = prompt.visible = false; return; }
+      if (endPanel.visible) { const es = LANG + (hover === 60); if (es !== endSig) { endSig = es; drawEnd(); } }
+      if (talking) {
+        if (!panel.visible) place(talking);
+        const s2 = [LANG, $('docname').textContent, $('you').textContent, $('you').style.display, $('line').textContent,
+          ...[...document.querySelectorAll('#options button')].map(b => b.textContent),
+          ...[...document.querySelectorAll('#steps i')].map(i => i.className), hover].join('|');
+        if (s2 !== sig && t - lastDraw > 0.07) { sig = s2; lastDraw = t; draw(); }
+      } else panel.visible = false;
+      prompt.visible = !talking && !!nearest;
+      if (prompt.visible) {
+        const label = pick(nearest.prompt), ps = label + LANG + (hover === 50);
+        if (ps !== promptSig) { promptSig = ps; drawPrompt(label); }
+        camera.getWorldPosition(eye);
+        prompt.position.set(nearest.group.position.x, nearest.height + 0.38, nearest.group.position.z);
+        prompt.lookAt(eye.x, prompt.position.y, eye.z);
+      }
+    },
+    // laser hit -> button id (99 close, 50 talk prompt, 0.. answers) or null
+    hit(h) {
+      if (h.object === prompt) return 50;
+      if (h.object === endPanel) { const px = h.uv.x * 1200, py = (1 - h.uv.y) * 760; return (px > 380 && px < 820 && py > 590 && py < 700) ? 60 : null; }
+      const px = h.uv.x * W, py = (1 - h.uv.y) * H;
+      const r = rects.find(r => px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h);
+      return r ? r.id : null;
+    },
+    setHover(id) { hover = id ?? -1; },
+    press(id) {
+      if (id === 50) { if (nearest && !talking) startDialog(nearest); return; }
+      if (id === 99) { endDialog(); return; }
+      if (id === 60) { hideEnd(); return; }
+      const r = rects.find(r => r.id === id);
+      if (r && r.el) { r.el.click(); sig = ''; }
+    },
+  };
+})();
+
+// Controllers: a laser from each hand, trigger = click
+const ray = new THREE.Raycaster(), rayMat = new THREE.Matrix4();
+const lasers = [0, 1].map(i => {
+  const ctl = renderer.xr.getController(i);
+  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0, -1)]),
+    new THREE.LineBasicMaterial({ color: '#9fe6c7' }));
+  line.scale.z = 3; ctl.add(line);
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(0.012, 12, 8), new THREE.MeshBasicMaterial({ color: '#ffffff' }));
+  dot.visible = false; scene.add(dot);
+  ctl.userData = { line, dot, target: null };
+  ctl.addEventListener('selectstart', () => { const tg = ctl.userData.target; if (tg?.go) tg.go(); else if (tg != null) vr.press(tg); });
+  player.add(ctl);
+  return ctl;
+});
+window.__vr = { vr, goTo };   // test hook
+function updateLasers() {
+  let hov = null;
+  const targets = [vr.panel, vr.prompt, vr.endPanel, ...portals.flatMap(p => p.targets)].filter(m => m.visible);
+  for (const ctl of lasers) {
+    const u = ctl.userData;
+    rayMat.identity().extractRotation(ctl.matrixWorld);
+    ray.ray.origin.setFromMatrixPosition(ctl.matrixWorld);
+    ray.ray.direction.set(0, 0, -1).applyMatrix4(rayMat);
+    const hit = targets.length ? ray.intersectObjects(targets, false)[0] : null;
+    u.target = hit ? (hit.object.userData.portal || vr.hit(hit)) : null;
+    u.line.scale.z = hit ? hit.distance : 3;
+    u.line.visible = targets.length > 0;
+    u.dot.visible = !!hit; if (hit) u.dot.position.copy(hit.point);
+    if (u.target != null) hov = u.target;
+  }
+  for (const p of portals) p.setHover(hov === p);
+  vr.setHover(hov?.go ? null : hov);
+}
+
+// ------------------------------------------------------------------- loop ---
+const clock3 = new THREE.Clock();
+const dir = new THREE.Vector3(), tmp = new THREE.Vector3();
+const freq = new Uint8Array(32);
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock3.getDelta(), 0.05), t = clock3.elapsedTime;
+  phoneApp.tick(t);
+  const inXR = renderer.xr.isPresenting;
+
+  let mx = 0, mz = 0;
+  if (!talking) {
+    if (keys.has('KeyW') || keys.has('ArrowUp')) mz += 1;
+    if (keys.has('KeyS') || keys.has('ArrowDown')) mz -= 1;
+    if (keys.has('KeyD')) mx += 1;
+    if (keys.has('KeyA')) mx -= 1;
+    if (keys.has('ArrowLeft')) yaw += 1.6 * dt;
+    if (keys.has('ArrowRight')) yaw -= 1.6 * dt;
+    if (hold.fwd) mz += 1;
+    if (hold.back) mz -= 1;
+    if (hold.turnL) yaw += 1.4 * dt;
+    if (hold.turnR) yaw -= 1.4 * dt;
+    const s = renderer.xr.getSession();
+    if (s) for (const src of s.inputSources) {
+      const gp = src.gamepad; if (!gp) continue;
+      const ax = gp.axes.length >= 4 ? [gp.axes[2], gp.axes[3]] : [gp.axes[0], gp.axes[1]];
+      if (src.handedness === 'left') { mx += ax[0]; mz -= ax[1]; }
+      if (src.handedness === 'right' && gp.buttons[4]?.pressed && nearest && !aHeld) startDialog(nearest);
+      if (src.handedness === 'right') aHeld = !!gp.buttons[4]?.pressed;
+    }
+  }
+  { const xs = renderer.xr.getSession();   // B ends the conversation in VR
+    if (xs && talking) for (const src of xs.inputSources) if (src.handedness === 'right' && src.gamepad?.buttons[5]?.pressed) endDialog(); }
+  player.rotation.y = yaw;
+  if (!inXR) camera.rotation.set(pitch, 0, 0, 'YXZ');
+  camera.getWorldDirection(dir); dir.y = 0; dir.normalize();
+  const len = Math.hypot(mx, mz);
+  if (len > 0.1) {
+    const speed = (keys.has('ShiftLeft') ? 3 : 1.6) * dt / Math.max(1, len);
+    let x = player.position.x + (dir.x * mz - dir.z * mx) * speed;
+    let z = player.position.z + (dir.z * mz + dir.x * mx) * speed;
+    [x, z] = collide(x, z);
+    player.position.x = x; player.position.z = z;
+  }
+
+  // People: face the visitor when close, breathe, nod while speaking; pick who you can talk to
+  camera.getWorldPosition(tmp);
+  const level = analyser ? freq.slice(2, 12).reduce((a, v) => a + v, 0) / (10 * 255) : 0;
+  let best = null, bestD = 2.4;
+  for (const c of CHARACTERS) {
+    if (!c.group) continue;
+    const dx = tmp.x - c.group.position.x, dz = tmp.z - c.group.position.z, d = Math.hypot(dx, dz);
+    const base = c.baseYaw || 0;
+    let target = base;
+    if (d < 5) { let a = Math.atan2(dx, dz) - base; a = Math.atan2(Math.sin(a), Math.cos(a)); target = base + Math.max(-c.maxTurn, Math.min(c.maxTurn, a)); }
+    c.group.rotation.y += (target - c.group.rotation.y) * Math.min(1, dt * 3);
+    const body = c.group.children[0];
+    body.scale.y = body.scale.x * (1 + Math.sin(t * 1.6 + c.pos[0]) * 0.004);
+    body.rotation.z = Math.sin(t * 0.45 + c.pos[0]) * 0.012;
+    body.rotation.x = (talking === c ? -level * 0.06 : 0) + Math.sin(t * 0.7) * 0.004;
+    if (d < bestD) { best = c; bestD = d; }
+  }
+  nearest = best;
+  if (!talking) {
+    promptEl.style.display = nearest ? 'block' : 'none';
+    if (nearest) document.getElementById('talkLabel').textContent = pick(nearest.prompt);
+  } else if (!inXR) {
+    // Ease the view towards whoever you are talking to
+    const g = talking.group.position;
+    const want = Math.atan2(-(g.x - player.position.x), -(g.z - player.position.z));
+    let diff = want - yaw; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+    yaw += diff * Math.min(1, dt * 2.5);
+    const dist = Math.hypot(g.x - player.position.x, g.z - player.position.z);
+    pitch += (Math.atan2(talking.height - 0.15 - 1.65, dist) - pitch) * Math.min(1, dt * 2.5);
+  }
+  if (analyser) { analyser.getByteFrequencyData(freq); bars.forEach((b, i) => { b.style.height = `${4 + freq[i * 3] / 255 * 14}px`; }); }
+  else bars.forEach(b => { b.style.height = '4px'; });
+
+  vr.update(inXR, t);
+  camera.getWorldPosition(tmp); for (const p of portals) p.update(t, tmp.x, tmp.z);
+  if (inXR) updateLasers();
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>

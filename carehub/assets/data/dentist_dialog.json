@@ -1,0 +1,105 @@
+{
+  "_note": "Care Hub scenario - Dr. Reem Al-Qahtani, cosmetic dentist at Al Waha Medical Clinic . Review before public use. Audio: media/dentist/<id>.mp3.",
+  "doctor_name": {
+    "ar": "د. ريم القحطاني",
+    "en": "Dr. Reem Al-Qahtani"
+  },
+  "role": {
+    "ar": "أخصائية أسنان تجميلي · عيادة الواحة الطبية",
+    "en": "Cosmetic dentist · Al Waha Medical Clinic"
+  },
+  "greeting": {
+    "id": "greeting",
+    "ar": "هلا وغلا، أنا الدكتورة ريم القحطاني. إنتي جاية بقسيمة كيرهب لتنظيف الأسنان، صح؟",
+    "en": "Welcome, I'm Dr. Reem Al-Qahtani. You're here with a Care Hub voucher for teeth cleaning, right?"
+  },
+  "rounds": [
+    {
+      "prompt": {
+        "ar": "اختاري سؤالك الأول",
+        "en": "Choose your first question"
+      },
+      "options": [
+        {
+          "id": "n1a",
+          "q": {
+            "ar": "الخدمة بقسيمة كيرهب نفس الخدمة العادية؟",
+            "en": "Is the Care Hub voucher service the same as the regular one?"
+          },
+          "a": {
+            "ar": "نفس الخدمة ونفس الجودة بالضبط. الفرق بس إن السعر هو سعر كيرهب اللي متفقين عليه مع العيادة، 200 ريال بدل 300.",
+            "en": "Exactly the same service and quality. The difference is the price: the Care Hub rate agreed with the clinic, 200 riyals instead of 300."
+          }
+        },
+        {
+          "id": "n1b",
+          "q": {
+            "ar": "في التطبيق كان في خيار «أي طبيب بسعر كيرهب» وخيار باسمك، وش الفرق؟",
+            "en": "The app had “any doctor at the Care Hub price” and an option with your name. What's the difference?"
+          },
+          "a": {
+            "ar": "خيار «أي طبيب بسعر كيرهب» يعني العيادة تحدد لك الطبيب وقت ما تنسّق الموعد بالسعر المخفض، وخيار اسمي يحجز لك معي أنا بالذات بسعر 300. واليوم أنا اللي متوفرة، يعني حصلتي عليّ بسعر كيرهب!",
+            "en": "“Any doctor at the Care Hub price” means the clinic assigns the doctor when booking, at the discounted rate. My named option books me specifically at 300. Today I'm the one available, so you got me at the Care Hub price!"
+          }
+        },
+        {
+          "id": "n1c",
+          "q": {
+            "ar": "كم تاخذ جلسة التنظيف؟",
+            "en": "How long does the cleaning take?"
+          },
+          "a": {
+            "ar": "تقريباً 30 دقيقة، ننظف الجير ونلمّع الأسنان، وما فيها أي ألم.",
+            "en": "About 30 minutes. We remove the tartar and polish the teeth, and it doesn't hurt."
+          }
+        }
+      ]
+    },
+    {
+      "prompt": {
+        "ar": "اختاري سؤالك الثاني",
+        "en": "Choose your second question"
+      },
+      "options": [
+        {
+          "id": "n2a",
+          "q": {
+            "ar": "أقدر أضيف تبييض؟",
+            "en": "Can I add whitening?"
+          },
+          "a": {
+            "ar": "أكيد. التبييض خدمة ثانية في كيرهب ولها قسيمة لحالها. تطلعينها من التطبيق والاستقبال يرتّب لك الموعد.",
+            "en": "Of course. Whitening is a separate Care Hub service with its own voucher. Issue it in the app and reception will arrange the appointment."
+          }
+        },
+        {
+          "id": "n2b",
+          "q": {
+            "ar": "متى أرجع للتنظيف؟",
+            "en": "When should I come back for a cleaning?"
+          },
+          "a": {
+            "ar": "كل 6 شهور. وقتها تاخذين قسيمة جديدة من كيرهب، والعيادة تتصل عليك عشان تحدد الموعد.",
+            "en": "Every 6 months. Get a new Care Hub voucher then, and the clinic will call you to set the appointment."
+          }
+        },
+        {
+          "id": "n2c",
+          "q": {
+            "ar": "في نصايح بعد الجلسة؟",
+            "en": "Any advice after the session?"
+          },
+          "a": {
+            "ar": "ابعدي عن القهوة والشاي أول 24 ساعة، واستخدمي الفرشاة والخيط كل يوم. وتابعي عروض كيرهب للفحص الدوري.",
+            "en": "Avoid coffee and tea for the first 24 hours, brush and floss daily, and keep an eye on Care Hub offers for your check-ups."
+          }
+        }
+      ]
+    }
+  ],
+  "closing": {
+    "id": "closing",
+    "ar": "خلاص، أشوفك داخل بعد شوي. ابتسامتك بتصير أحلى!",
+    "en": "Great, see you inside shortly. Your smile is about to get even better!"
+  }
+}

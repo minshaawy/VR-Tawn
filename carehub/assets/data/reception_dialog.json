@@ -1,0 +1,105 @@
+{
+  "_note": "Care Hub scenario - Lama, receptionist at Al Waha Medical Clinic. Follows 'سيناريو تجربة الواقع الافتراضي - كيرهب' scenes 5-6. Review before public use. Audio: media/reception/<id>.mp3 (see CAREHUB_VOICE_SCRIPT.md).",
+  "doctor_name": {
+    "ar": "لمى",
+    "en": "Lama"
+  },
+  "role": {
+    "ar": "موظفة الاستقبال · عيادة الواحة الطبية",
+    "en": "Receptionist · Al Waha Medical Clinic"
+  },
+  "greeting": {
+    "id": "greeting",
+    "ar": "أهلاً وسهلاً فيكِ في عيادة الواحة الطبية! عندك موعد؟",
+    "en": "Welcome to Al Waha Medical Clinic! Do you have an appointment?"
+  },
+  "rounds": [
+    {
+      "prompt": {
+        "ar": "ردّي على موظفة الاستقبال",
+        "en": "Answer the receptionist"
+      },
+      "options": [
+        {
+          "id": "c1a",
+          "q": {
+            "ar": "إيه، عندي موعد تنظيف أسنان وعندي قسيمة من كيرهب.",
+            "en": "Yes, I have a teeth-cleaning appointment and a Care Hub voucher."
+          },
+          "a": {
+            "ar": "حياكِ الله! موعدك مؤكد الساعة 5. ممكن تفتحين تطبيق كيرهب، قسم «قسائمي»، وتعرضين رمز الـQR الخاص بالقسيمة؟",
+            "en": "Welcome! Your 5 o'clock appointment is confirmed. Could you open the Care Hub app, go to “My vouchers”, and show me the voucher's QR code?"
+          }
+        },
+        {
+          "id": "c1b",
+          "q": {
+            "ar": "إنتو اللي اتصلتوا علي بخصوص قسيمة كيرهب؟",
+            "en": "Are you the ones who called me about the Care Hub voucher?"
+          },
+          "a": {
+            "ar": "أي نعم، جانا إشعار من كيرهب إنك أخذتي قسيمة تنظيف الأسنان، واتصلنا عليك عشان نحدد لك الموعد. موعدك اليوم الساعة 5. افتحي قسم «قسائمي» في التطبيق وورّيني رمز الـQR.",
+            "en": "Yes. Care Hub notified us that you got a teeth-cleaning voucher, so we called to book you in. Your appointment is today at 5. Open “My vouchers” in the app and show me the QR code."
+          }
+        },
+        {
+          "id": "c1c",
+          "q": {
+            "ar": "شفت لوحة كيرهب عندكم، وش هي كيرهب؟",
+            "en": "I saw your Care Hub sign. What is Care Hub?"
+          },
+          "a": {
+            "ar": "كيرهب منصة تجمع عيادات معروفة بعروض وخصومات حصرية. تختارين الخدمة من التطبيق، وتطلع لك قسيمة بسعر مضمون، وتجين لنا برمز الـQR. وإذا عندك قسيمة، افتحي «قسائمي» وورّيني إياها.",
+            "en": "Care Hub is a platform of well-known clinics with exclusive offers. You pick a service in the app, get a voucher with a guaranteed price, and bring us the QR code. If you have one, open “My vouchers” and show it to me."
+          }
+        }
+      ]
+    },
+    {
+      "prompt": {
+        "ar": "اعرضي القسيمة",
+        "en": "Show the voucher"
+      },
+      "options": [
+        {
+          "id": "c2a",
+          "q": {
+            "ar": "تفضلي، هذا رمز الـQR من قسم قسائمي.",
+            "en": "Here you go, this is the QR code from My vouchers."
+          },
+          "a": {
+            "ar": "تم استخدام القسيمة بنجاح! تمام، تم تفعيل عرضك، وسعر تنظيف الأسنان بعد الخصم 200 ريال.",
+            "en": "Voucher redeemed successfully! Your offer is active, and the teeth cleaning is 200 riyals after the discount."
+          }
+        },
+        {
+          "id": "c2b",
+          "q": {
+            "ar": "كم السعر بعد الخصم؟",
+            "en": "How much is it after the discount?"
+          },
+          "a": {
+            "ar": "تنظيف الأسنان بسعر كيرهب 200 ريال بدل 300، والسعر مضمون لأن القسيمة مثبّتة الخدمة والسعر من يوم ما طلعت. خلّيني أمسح رمز الـQR الحين وأفعّل لك العرض.",
+            "en": "Teeth cleaning at the Care Hub price is 200 riyals instead of 300, guaranteed because the voucher locked the service and price when it was issued. I'll scan the QR now and activate the offer."
+          }
+        },
+        {
+          "id": "c2c",
+          "q": {
+            "ar": "أقدر أدفع هنا عند الاستقبال؟",
+            "en": "Can I pay here at reception?"
+          },
+          "a": {
+            "ar": "أكيد، تدفعين عندنا هنا في الاستقبال بالبطاقة أو كاش. بس خلّيني أمسح رمز القسيمة أول، والسعر بعد الخصم 200 ريال.",
+            "en": "Of course, you pay here at reception by card or cash. Let me scan the voucher first; it's 200 riyals after the discount."
+          }
+        }
+      ]
+    }
+  ],
+  "closing": {
+    "id": "closing",
+    "ar": "تم الدفع بنجاح، تفضلي بالجلوس وبنناديك بعد شوي.",
+    "en": "Payment received. Please have a seat, we'll call you shortly."
+  }
+}
