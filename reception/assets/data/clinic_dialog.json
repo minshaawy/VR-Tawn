@@ -23,7 +23,7 @@
             "en": "Is this visit covered by my Tawuniya insurance?"
           },
           "a": {
-            "ar": "أكيد. العيادة ضمن شبكة التعاونية، قدّم بطاقتك الطبية في الاستقبال، والموافقة تتم إلكترونياً خلال دقائق.",
+            "ar": "أكيد. العيادة ضمن شبكة التعاونية، قدّم بطاقتك الطبية أو هويتك في الاستقبال، والتحقق من التغطية يتم إلكترونياً.",
             "en": "Of course. This clinic is in the Tawuniya network — show your medical card at reception and approval is done electronically within minutes."
           }
         },
@@ -34,7 +34,7 @@
             "en": "Do I need prior approval before treatment?"
           },
           "a": {
-            "ar": "بعض الإجراءات تحتاج موافقة مسبقة، وإحنا نرسلها للتعاونية إلكترونياً مباشرة، وتوصلك النتيجة برسالة على جوالك.",
+            "ar": "بعض الإجراءات تحتاج موافقة مسبقة، وإحنا نرسلها للتعاونية إلكترونياً مباشرة، والرد يوصل خلال ساعة على الأكثر، وتتابعه من تطبيق التعاونية.",
             "en": "Some procedures need prior approval. We send it to Tawuniya electronically and you get the result by text message."
           }
         },
@@ -64,7 +64,7 @@
             "en": "What do I do in an emergency?"
           },
           "a": {
-            "ar": "في الطوارئ توجّه لأقرب مستشفى مباشرة، ما تحتاج موافقة مسبقة، والتغطية حسب وثيقتك.",
+            "ar": "في الطوارئ توجّه لأقرب مستشفى مباشرة، ما تحتاج موافقة مسبقة، والمستشفى يبلّغ التعاونية، والتغطية حسب وثيقتك.",
             "en": "In an emergency go straight to the nearest hospital — no prior approval needed, and you're covered according to your policy."
           }
         },
@@ -75,7 +75,7 @@
             "en": "Are medicines covered?"
           },
           "a": {
-            "ar": "الأدوية الموصوفة مغطاة حسب وثيقتك، وتقدر تستلمها من الصيدليات المعتمدة أو توصلك لين البيت.",
+            "ar": "الأدوية الموصوفة مغطاة حسب وثيقتك، وتقدر تستلمها من أي صيدلية معتمدة ضمن شبكة التعاونية.",
             "en": "Prescribed medicines are covered under your policy — pick them up at an approved pharmacy or have them delivered home."
           }
         },
@@ -86,7 +86,7 @@
             "en": "Can I consult a doctor remotely?"
           },
           "a": {
-            "ar": "إيه، تقدر تحجز استشارة طبية عن بُعد من تطبيق التعاونية وتكلّم الطبيب بالفيديو.",
+            "ar": "إيه، من تطبيق التعاونية تقدر تطلب خدمة «استشر طبيبك»، ويتصل فيك طبيب معتمد في أي وقت.",
             "en": "Yes, you can book a remote consultation in the Tawuniya app and talk to a doctor by video."
           }
         }
@@ -95,7 +95,7 @@
   ],
   "closing": {
     "id": "closing",
-    "ar": "سلامتك، وإذا احتجت أي شي، التعاونية معك دايماً.",
+    "ar": "سلامتك، وإذا احتجت أي شي، التعاونية معك لتطمئن.",
     "en": "Get well soon — and whatever you need, Tawuniya is always with you."
   }
 }

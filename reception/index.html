@@ -84,6 +84,7 @@
     <a class="tbtn" href="../accident/" data-portal="0" style="text-decoration:none;display:inline-flex;align-items:center;box-sizing:border-box">🚗 موقع الحادث</a>
     <a class="tbtn" href="../showroom/" data-portal="1" style="text-decoration:none;display:inline-flex;align-items:center;box-sizing:border-box">🚘 معرض السيارات</a>
     <a class="tbtn" href="../home/" data-portal="2" style="text-decoration:none;display:inline-flex;align-items:center;box-sizing:border-box">👴 البيت</a>
+    <a class="tbtn" href="../carehub/" data-portal="3" style="text-decoration:none;display:inline-flex;align-items:center;box-sizing:border-box">🦷 عيادة كيرهب</a>
     <button class="tbtn" id="lang">English</button>
     <button class="tbtn vr" id="vrTop">ادخل VR 🥽</button>
   </div>
@@ -587,6 +588,7 @@ const portals = [
   addPortal({ THREE, scene, ...{ x: 3.4, z: 2.6, face: [0, 4.4], href: '../accident/', color: '#F2A33A', label: { ar: 'روح لموقع الحادث', en: 'Go to the accident site' } }, getLang: () => LANG, inXR: () => renderer.xr.isPresenting }),
   addPortal({ THREE, scene, ...{ x: -4.6, z: 4.7, face: [0, 4.4], href: '../showroom/', color: '#6B47F5', label: { ar: 'روح لمعرض السيارات', en: 'Go to the car showroom' } }, getLang: () => LANG, inXR: () => renderer.xr.isPresenting }),
   addPortal({ THREE, scene, ...{ x: -6.6, z: -1.6, face: [0, 4.4], href: '../home/', color: '#2FA36B', label: { ar: 'روح لبيت أبو محمد', en: 'Go to Abu Mohammed\'s home' } }, getLang: () => LANG, inXR: () => renderer.xr.isPresenting }),
+  addPortal({ THREE, scene, ...{ x: 6.4, z: 0.9, face: [0, 4.4], href: '../carehub/', color: '#0E5C43', label: { ar: 'روح لعيادة كيرهب', en: 'Go to the Care Hub clinic' } }, getLang: () => LANG, inXR: () => renderer.xr.isPresenting }),
 ];
 for (const a of document.querySelectorAll('[data-portal]')) a.onclick = e => { e.preventDefault(); portals[+a.dataset.portal].go(); };
 if (arrival({ setLang, enterVR })) goVRBtn.focus();
