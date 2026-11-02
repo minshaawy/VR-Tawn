@@ -5,9 +5,7 @@
 <script src="../gate.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Tawuniya Showroom VR</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="../vendor/fonts/tajawal.css" rel="stylesheet">
 <style>
   :root { --brand:#6B47F5; --brand-dark:#34295E; --teal:#3FB8C9; }
   html, body { margin:0; height:100%; overflow:hidden; background:#0E0C14; color:#fff; font-family:Tajawal, system-ui, sans-serif;
@@ -75,8 +73,8 @@
 </style>
 <script type="importmap">
 { "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  "three": "../vendor/three/three.module.js",
+  "three/addons/": "../vendor/three/addons/"
 } }
 </script>
 </head>
@@ -295,7 +293,7 @@ function fit(root, { len, height }) {
   root.position.sub(new THREE.Vector3(c.x / g.scale.x, b.min.y / g.scale.x, c.z / g.scale.x));
   return g;
 }
-const draco = new DRACOLoader().setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/gltf/');
+const draco = new DRACOLoader().setDecoderPath('../vendor/three/libs/draco/gltf/');
 gltf.setDRACOLoader(draco);
 // Car on its turntable: long axis along x, scaled to its real length
 async function car(c) {
